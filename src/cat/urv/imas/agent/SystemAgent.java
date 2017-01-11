@@ -41,11 +41,13 @@ import jade.wrapper.ContainerController;
 import jade.wrapper.StaleProxyException;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-
+import java.util.Random;
+import java.util.ArrayList;
+import jade.core.behaviours.*;
 /**
  * System agent that controls the GUI and loads initial configuration settings.
  * TODO: You have to decide the onthology and protocol when interacting among
@@ -185,39 +187,18 @@ public class SystemAgent extends ImasAgent {
         MessageTemplate mt = MessageTemplate.and(MessageTemplate.MatchProtocol(InteractionProtocol.FIPA_REQUEST), MessageTemplate.MatchPerformative(ACLMessage.REQUEST));
 
         this.addBehaviour(new RequestResponseBehaviour(this, mt));
-
+        
+        
+	this.addBehaviour(new MainLoopBehaviour(this, 1000));
+		
+	System.out.println("Setup finished\n");
         // Setup finished. When the last inform is received, the agent itself will add
         // a behaviour to send/receive actions
         
-        int[][] map2
-            = {
-                {10, 10, R, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10},
-                {10,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  SC,  S,  S,  S,  S,  S,  H,  S,  S,  S,  S,  S, 10},
-                {10,  S,  H,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S, 10},
-                {10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10},
-                {10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10},
-                {10,  S,  S, 10, 10,  S,  S,  S,  S,  S,  S, 10, 10,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S, 10},
-                {10,  S,  S, 10, 10,  S,  S,  S,  S,  S,  S, 10, 10,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S, 10},
-                {10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10, 10,  S,  S, 10},
-                {10,  S,  S, 10,  R,  S,  H, 10, 10,  S,  S, 10, 10,  H,  S, 10, 10,  S,  S, 10, 10,  S,  S,  S, 10},
-                {10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S,  R, 10,  S,  S, 10, 10,  S,  H, 10, 10,  S,  S,  S, 10},
-                {10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S,  S, 10},
-                {10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  SC,  S,  S, 10},
-                {10,  S,  S, 10, 10,  H,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  SC,  S, 10, 10,  S,  S,  S, 10},
-                {10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10},
-                {10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  SC,  S, 10, 10,  S,  S,  S, 10},
-                {10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S,  S, 10},
-                {10,  S,  S, 10, 10,  S,  S, 10, 10,  SC,  S, 10, 10,  S,  S, 10, 10,  S,  S, R, 10,  S,  S,  S, 10},
-                {10,  S,  H,  S,  S,  S,  S, 10, 10,  S,  S,  S,  S,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S,  S, 10},
-                {10,  S,  S,  S,  S,  S,  S, 10, 10,  S,  S,  S,  S,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S,  S, 10},
-                {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10},};
-                
-        
-        //gui.showGameMap(map2);
-        //System.out.println("amog");
+  
         Cell [][] x;
         x = game.getMap();
-        Map listOfAgents = game.getAgentList();
+        
         
         System.out.println(x.length);
         
@@ -225,39 +206,85 @@ public class SystemAgent extends ImasAgent {
         
         System.out.println(x[16][9].getCellType());
         
+        moveAgent();
+        
+    }
+    
+    public void moveAgent() {
+        InfoAgent info, info2;
+        boolean is, found;
+        int i,j, ri, rj, end, imax, jmax;
+        end = 0;
+        Random rand = new Random();
+
+        Cell [][] mapa;
+        mapa = game.getMap();
+        imax = mapa.length;
+        jmax = mapa[0].length;
+        Map listOfAgents = game.getAgentList();
         Set<AgentType> setOfAgents = listOfAgents.keySet();
-        StreetCell scell;
-        InfoAgent info;
-        boolean is;
-        int i,j;
+        HashMap newListOfAgents; // We need to create another list of agents and update it.
+        newListOfAgents = new HashMap<AgentType, List<Cell>>();
+        List<Cell> newCells; // The list of agents is a map of AgentType and list of cells.
+        StreetCell ce;
 
         for (AgentType at : setOfAgents){
-            List<Cell> cells = (List<Cell>)listOfAgents.get(at);
-            
-            //if (at.toString().equals("SCOUT")){
-                for (Cell c : cells){
-                    i = c.getRow();
-                    j = c.getCol();
-                    //is = x[i][j].isThereAnAgent();
-                    if (x[i][j] instanceof StreetCell) {
-                        info = ((StreetCell)x[i][j]).getAgent();
-                        is = ((StreetCell)x[i][j]).isThereAnAgent();
-                        System.out.println(is);
-                        System.out.println(info);
-                        try {
-                            ((StreetCell)x[i][j]).removeAgent(info);
-                        }catch(Exception e){
-                            //System.err.println(e);
-                        }
-                        is = ((StreetCell)x[i][j]).isThereAnAgent();
-                        System.out.println(is);
+        List<Cell> cells = (List<Cell>)listOfAgents.get(at);  
+        newCells = new ArrayList<Cell>(); // For every agentType we change the list of cells.
+            for (Cell c : cells){
+                found = false;
+                i = c.getRow();
+                j = c.getCol();
+                //is = x[i][j].isThereAnAgent();
+                if (mapa[i][j] instanceof StreetCell) {
+                    info = ((StreetCell)mapa[i][j]).getAgent();
+                    info2 = ((StreetCell)mapa[i][j]).getAgent();
+                    is = ((StreetCell)mapa[i][j]).isThereAnAgent();
+                    System.out.println(is);
+                    System.out.println(info);
+                    try {
+                        ((StreetCell)mapa[i][j]).removeAgent(info);
+                    }catch(Exception e){
+                        //System.err.println(e);
                     }
+                    is = ((StreetCell)mapa[i][j]).isThereAnAgent();
+                    System.out.println(is);
 
+                    while (!found) {
+                        ri  = rand.nextInt(imax) + 0;
+                        rj  = rand.nextInt(jmax) + 0;
+                        //*max is the maximum and the 0 is our minimum 
+                        if (mapa[ri][rj].getCellType().toString() == "STREET" && !((StreetCell)mapa[ri][rj]).isThereAnAgent()) {
+                            found = true;
+                            try {
+                                ((StreetCell)mapa[ri][rj]).addAgent(info2);
+                            }catch(Exception e){
+                            //System.err.println(e);
+                            }
+                            newCells.add(mapa[ri][rj]);
+                        }
+                    }
                 }
-            //}
-        }
+            }
+            newListOfAgents.put(at, newCells);
+        }  
+        game.setAgentList(newListOfAgents);
+        end++;
     }
-  
+    
+    
+    private class MainLoopBehaviour extends TickerBehaviour {
+
+		public MainLoopBehaviour(Agent a, long period) {
+			super(a, period);
+		}
+
+		@Override
+		protected void onTick() {		
+                   moveAgent();
+                }
+    }
+    
     public void updateGUI() {
         this.gui.updateGame();
     }
