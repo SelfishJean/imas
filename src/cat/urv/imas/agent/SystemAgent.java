@@ -27,6 +27,10 @@ import cat.urv.imas.map.Cell;
 import cat.urv.imas.map.StreetCell;
 import cat.urv.imas.onthology.GarbageType;
 import cat.urv.imas.onthology.InfoAgent;
+import static cat.urv.imas.onthology.InitialGameSettings.H;
+import static cat.urv.imas.onthology.InitialGameSettings.R;
+import static cat.urv.imas.onthology.InitialGameSettings.S;
+import static cat.urv.imas.onthology.InitialGameSettings.SC;
 import jade.core.*;
 import jade.domain.*;
 import jade.domain.FIPAAgentManagement.*;
@@ -185,8 +189,75 @@ public class SystemAgent extends ImasAgent {
         // Setup finished. When the last inform is received, the agent itself will add
         // a behaviour to send/receive actions
         
+        int[][] map2
+            = {
+                {10, 10, R, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10},
+                {10,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  SC,  S,  S,  S,  S,  S,  H,  S,  S,  S,  S,  S, 10},
+                {10,  S,  H,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S, 10},
+                {10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10},
+                {10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10},
+                {10,  S,  S, 10, 10,  S,  S,  S,  S,  S,  S, 10, 10,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S, 10},
+                {10,  S,  S, 10, 10,  S,  S,  S,  S,  S,  S, 10, 10,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S, 10},
+                {10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10, 10,  S,  S, 10},
+                {10,  S,  S, 10,  R,  S,  H, 10, 10,  S,  S, 10, 10,  H,  S, 10, 10,  S,  S, 10, 10,  S,  S,  S, 10},
+                {10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S,  R, 10,  S,  S, 10, 10,  S,  H, 10, 10,  S,  S,  S, 10},
+                {10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S,  S, 10},
+                {10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  SC,  S,  S, 10},
+                {10,  S,  S, 10, 10,  H,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  SC,  S, 10, 10,  S,  S,  S, 10},
+                {10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10},
+                {10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  SC,  S, 10, 10,  S,  S,  S, 10},
+                {10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S,  S, 10},
+                {10,  S,  S, 10, 10,  S,  S, 10, 10,  SC,  S, 10, 10,  S,  S, 10, 10,  S,  S, R, 10,  S,  S,  S, 10},
+                {10,  S,  H,  S,  S,  S,  S, 10, 10,  S,  S,  S,  S,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S,  S, 10},
+                {10,  S,  S,  S,  S,  S,  S, 10, 10,  S,  S,  S,  S,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S,  S, 10},
+                {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10},};
+                
+        
+        //gui.showGameMap(map2);
+        //System.out.println("amog");
+        Cell [][] x;
+        x = game.getMap();
+        Map listOfAgents = game.getAgentList();
+        
+        System.out.println(x.length);
+        
+        System.out.println(x[3][3]);
+        
+        System.out.println(x[16][9].getCellType());
+        
+        Set<AgentType> setOfAgents = listOfAgents.keySet();
+        StreetCell scell;
+        InfoAgent info;
+        boolean is;
+        int i,j;
+
+        for (AgentType at : setOfAgents){
+            List<Cell> cells = (List<Cell>)listOfAgents.get(at);
+            
+            //if (at.toString().equals("SCOUT")){
+                for (Cell c : cells){
+                    i = c.getRow();
+                    j = c.getCol();
+                    //is = x[i][j].isThereAnAgent();
+                    if (x[i][j] instanceof StreetCell) {
+                        info = ((StreetCell)x[i][j]).getAgent();
+                        is = ((StreetCell)x[i][j]).isThereAnAgent();
+                        System.out.println(is);
+                        System.out.println(info);
+                        try {
+                            ((StreetCell)x[i][j]).removeAgent(info);
+                        }catch(Exception e){
+                            //System.err.println(e);
+                        }
+                        is = ((StreetCell)x[i][j]).isThereAnAgent();
+                        System.out.println(is);
+                    }
+
+                }
+            //}
+        }
     }
-    
+  
     public void updateGUI() {
         this.gui.updateGame();
     }
