@@ -18,13 +18,17 @@
 package cat.urv.imas.agent;
 
 import cat.urv.imas.onthology.GameSettings;
-import cat.urv.imas.behaviour.coordinator.RequesterBehaviour;
+import cat.urv.imas.behaviour.coordinator.*;
+import cat.urv.imas.onthology.InfoAgent;
 import cat.urv.imas.onthology.MessageContent;
 import jade.core.*;
+import jade.core.behaviours.*;
 import jade.domain.*;
 import jade.domain.FIPAAgentManagement.*;
 import jade.domain.FIPANames.InteractionProtocol;
 import jade.lang.acl.*;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * The main Coordinator agent. 
@@ -36,12 +40,42 @@ public class CoordinatorAgent extends ImasAgent {
     /**
      * Game settings in use.
      */
-    private GameSettings game;
+    public GameSettings game;
     /**
      * System agent id.
      */
-    private AID systemAgent;
-
+    public AID systemAgent;
+    /**
+     * InfoAgent. It contains the following information of all agents.
+     */
+    public ArrayList<InfoAgent> newInfoAgent;
+    /**
+     * isMapUpdated. If the map has been already updated, then we can send the new positions
+     * (we need it because we need to know the new map to modify the previous position
+     * of our agents in the newInfoAgent variable in order to delete the agents correctly).
+     */
+    public boolean updatedMap = false;
+    /**
+     * updatingMapBehaviour. It is going to be the behaviour that sends a request to 
+     * update the map.
+     */
+    public Behaviour updatingMapBehaviour;
+    
+    public void setUpdatedMap(boolean temp) {
+        this.updatedMap = temp;
+    }
+    
+    public boolean getUpdatedMap() {
+        return this.updatedMap;
+    }
+    
+    /**
+     * isMapUpdated. If the map has been already updated, then we can send the new positions
+     * (we need it because we need to know the new map to modify the previous position
+     * of our agents in the newInfoAgent variable in order to delete the agents correctly).
+     */
+    public boolean sentNewPositions = false;
+    
     /**
      * Builds the coordinator agent.
      */
@@ -84,23 +118,64 @@ public class CoordinatorAgent extends ImasAgent {
         // searchAgent is a blocking method, so we will obtain always a correct AID
 
         /* ********************************************************************/
-        ACLMessage initialRequest = new ACLMessage(ACLMessage.REQUEST);
-        initialRequest.clearAllReceiver();
-        initialRequest.addReceiver(this.systemAgent);
-        initialRequest.setProtocol(InteractionProtocol.FIPA_REQUEST);
-        log("Request message to agent");
+        
+
+        //we add a behaviour that sends the message and waits for an answer
+        
+        
+        ACLMessage NewStepRequest = new ACLMessage(ACLMessage.REQUEST);
+        NewStepRequest.clearAllReceiver();
+        NewStepRequest.addReceiver(this.systemAgent);
+        NewStepRequest.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
+        //log("Request message to agent");
         try {
-            initialRequest.setContent(MessageContent.GET_MAP);
-            log("Request message content:" + initialRequest.getContent());
+            NewStepRequest.setContentObject(this.newInfoAgent);
         } catch (Exception e) {
             e.printStackTrace();
         }
 
+        /*
+        //mapaBehaviour.restart();
+        int i = 0;
+        while (i<3) {
+            if (i==1)
+                this.addBehaviour(new UpdateMapBehaviour(this, NewStepRequest));
+            else
+                this.addBehaviour(new RequestMapBehaviour(this, initialRequest));
+            i++;
+        }
+*/
         //we add a behaviour that sends the message and waits for an answer
-        this.addBehaviour(new RequesterBehaviour(this, initialRequest));
+        //this.addBehaviour(new UpdateMapBehaviour(this, NewStepRequest));
 
         // setup finished. When we receive the last inform, the agent itself will add
         // a behaviour to send/receive actions
+        
+        // Finite State Machine
+        
+        FSMBehaviour fsm = new FSMBehaviour(this) {
+            public int onEnd() {
+                            System.out.println("(CoordinatorAgent) FSM behaviour completed.");
+                            myAgent.doDelete();
+                            return super.onEnd();
+                    }
+        };
+        
+        fsm.registerState(new WaitForMapBehaviour(this), "STATE_1");
+        fsm.registerFirstState(new GenerateNewPositionsBehaviour(this), "STATE_2");
+        //fsm.registerState(new AuxiliarSimpleBehaviour(this), "STATE_3");
+        
+        //fsm.registerState(new NewPositions(this), "STATE_2");
+        //fsm.registerState(new UpdateMapBehaviour(this), "STATE_3");
+        
+        fsm.registerDefaultTransition("STATE_1", "STATE_2");
+        fsm.registerDefaultTransition("STATE_2", "STATE_1");
+        //fsm.registerDefaultTransition("STATE_3", "STATE_1");
+        //fsm.registerDefaultTransition("STATE_3", "STATE_2");
+        //fsm.registerDefaultTransition("STATE_4", "STATE_2");
+
+        this.addBehaviour(fsm);
+
     }
 
     /**
@@ -119,6 +194,29 @@ public class CoordinatorAgent extends ImasAgent {
      */
     public GameSettings getGame() {
         return this.game;
+    }
+    
+    /**
+     * Gets the next information for all agents.
+     *
+     * @return info ALL agentS (is a list). It has to be an ArrayList because List is not serializable.
+     */
+    public ArrayList<InfoAgent> getNewInfoAgent() {
+        return this.newInfoAgent;
+    }
+    
+    /**
+     * Update agent information.
+     *
+     * @param newInfo information of all agents for next simulation step.
+     */
+    public void setNewInfoAgent(ArrayList<InfoAgent> newInfo) {
+        try {
+            this.newInfoAgent.clear();
+        } catch (Exception e) {
+            
+        }
+        this.newInfoAgent = newInfo;
     }
 
 }

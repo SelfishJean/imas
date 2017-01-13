@@ -22,7 +22,7 @@ import static cat.urv.imas.agent.UtilsAgents.searchAgent;
 import cat.urv.imas.onthology.InitialGameSettings;
 import cat.urv.imas.onthology.GameSettings;
 import cat.urv.imas.gui.GraphicInterface;
-import cat.urv.imas.behaviour.system.RequestResponseBehaviour;
+import cat.urv.imas.behaviour.system.*;
 import cat.urv.imas.map.Cell;
 import cat.urv.imas.map.StreetCell;
 import cat.urv.imas.onthology.GarbageType;
@@ -69,6 +69,21 @@ public class SystemAgent extends ImasAgent {
      * round.
      */
     private AID coordinatorAgent;
+    /**
+     * InfoAgent. It contains the following information of all agents.
+     * It has to be an ArrayList because List is not serializable.
+     */
+    public ArrayList<InfoAgent> newInfoAgent;
+    /**
+     * NewTurn. It is true when the Coordinator agent orders to update the map 
+     * using the UpdateMapBehaviour.
+     */
+    public boolean newTurn = false;
+    /**
+     * SentMap. It is true when the Coordinator agent has already received the new map.
+     */
+    public boolean sentMap = false;
+    
 
     /**
      * Builds the System agent.
@@ -115,6 +130,63 @@ public class SystemAgent extends ImasAgent {
     }
     
     /**
+     * Gets the value of newTurn variable, which says if there is or not a new turn.
+     *
+     * @return newTurn.
+     */
+    public boolean getThereIsNewTurn() {
+        return this.newTurn;
+    }
+    
+    /**
+     * Sets the value of newTurn variable, which says if there is or not a new turn.
+     *
+     */
+    public void setThereIsNewTurn(boolean temp) {
+        this.newTurn = temp;
+    }
+    
+        /**
+     * Gets the value of newMapPetition variable.
+     *
+     * @return newTurn.
+     */
+    public boolean getMapAlreadySent() {
+        return this.sentMap;
+    }
+    
+    /**
+     * Sets the value of newMapPetition variable.
+     *
+     */
+    public void setMapAlreadySent(boolean temp) {
+        this.sentMap = temp;
+    }
+    
+    /**
+     * Gets the next information for all agents.
+     *
+     * @return info ALL agentS (is a list). It has to be an ArrayList because List is not serializable.
+     */
+    public ArrayList<InfoAgent> getNewInfoAgent() {
+        return this.newInfoAgent;
+    }
+    
+    /**
+     * Update agent information.
+     *
+     * @param newInfo information of all agents for next simulation step.
+     */
+    public void setNewInfoAgent(ArrayList<InfoAgent> newInfo) {
+        try {
+            this.newInfoAgent.clear();
+        } catch (Exception e) {
+            
+        }
+        this.newInfoAgent = newInfo;
+    }
+    
+    /**
      * Agent setup method - called when it first come on-line. Configuration of
      * language to use, ontology and initialization of behaviours.
      */
@@ -148,9 +220,22 @@ public class SystemAgent extends ImasAgent {
         createAgent(this.getContainerController(), "Coordinator", CoordinatorAgent.class.getName(), null);
         createAgent(this.getContainerController(), "ScoutCoordinator", ScoutCoordinator.class.getName(), null);
         createAgent(this.getContainerController(), "HarvestCoordinator", HarvestCoordinator.class.getName(), null);
-       
-
-        Map m = this.game.getAgentList();
+        
+        
+        // Scouts and Harvester agents initialization in JADE and setting of AID (to work with them).
+        ServiceDescription searchCriterionSC = new ServiceDescription();
+        searchCriterionSC.setType(AgentType.SCOUT.toString());
+        ServiceDescription searchCriterionH = new ServiceDescription();
+        searchCriterionH.setType(AgentType.HARVESTER.toString());
+        String agentName = "";
+        AID aid = null;
+        
+        InfoAgent info;
+        Cell [][] mapa;
+        mapa = game.getMap();
+        int i, j;
+        
+        Map m = this.game.getAgentList(); 
         Set<AgentType> s = m.keySet();
         int numS = 1;
         int numH = 1;
@@ -158,12 +243,40 @@ public class SystemAgent extends ImasAgent {
             List<Cell> cells = (List<Cell>)m.get(at);
             
             if (at.toString().equals("SCOUT")){
-                for (Cell c : cells)
-                    createAgent(this.getContainerController(), "Scout_"+(numS++), Scout.class.getName(), new Object[]{c});
+                for (Cell c : cells) {
+                    agentName = "Scout_"+(numS++);
+                    createAgent(this.getContainerController(), agentName, Scout.class.getName(), new Object[]{c});
+                    searchCriterionSC.setName(agentName);
+                    aid = UtilsAgents.searchAgent(this, searchCriterionSC);
+                    //System.out.println(aid);
+                    
+                    i = c.getRow();
+                    j = c.getCol();
+                    if (mapa[i][j] instanceof StreetCell) {
+                        info = ((StreetCell)mapa[i][j]).getAgent();
+                        info.setAID(aid);
+                        info.setRow(i);
+                        info.setColumn(j);
+                    }
+                }
                     
             }else{
-                for (Cell c : cells)
-                    createAgent(this.getContainerController(), "Harvester_"+(numH++), Harvester.class.getName(), new Object[]{c});
+                for (Cell c : cells) {
+                    agentName = "Harvester_"+(numH++);
+                    createAgent(this.getContainerController(), agentName, Harvester.class.getName(), new Object[]{c});
+                    searchCriterionH.setName(agentName);
+                    aid = UtilsAgents.searchAgent(this, searchCriterionH);
+                    //System.out.println(aid);
+                    
+                    i = c.getRow();
+                    j = c.getCol();
+                    if (mapa[i][j] instanceof StreetCell) {
+                        info = ((StreetCell)mapa[i][j]).getAgent();
+                        info.setAID(aid);
+                        info.setRow(i);
+                        info.setColumn(j);
+                    }
+                }
             }
         }
        
@@ -182,108 +295,132 @@ public class SystemAgent extends ImasAgent {
         this.coordinatorAgent = UtilsAgents.searchAgent(this, searchCriterion);
         // searchAgent is a blocking method, so we will obtain always a correct AID
 
-        // add behaviours
-        // we wait for the initialization of the game
-        MessageTemplate mt = MessageTemplate.and(MessageTemplate.MatchProtocol(InteractionProtocol.FIPA_REQUEST), MessageTemplate.MatchPerformative(ACLMessage.REQUEST));
+        
+        System.out.println("Setup almost finished\n");
+        
+        // Finite State Machine
+        FSMBehaviour fsm = new FSMBehaviour(this) {
+            public int onEnd() {
+                            System.out.println("(SystemAgent) FSM behaviour completed.");
+                            myAgent.doDelete();
+                            return super.onEnd();
+                    }
+        };
+        
+        fsm.registerFirstState(new RequestResponseBehaviour(this), "STATE_1");
+        //fsm.registerState(new UpdateMapBehaviour(this, NewStepRequest), "STATE_2");
+        fsm.registerState(new UpdateMapResponseBehaviour(this), "STATE_2");
+        fsm.registerState(new UpdateSimulationBehaviour(this), "STATE_3");
+        
+        
+        
+        fsm.registerDefaultTransition("STATE_1", "STATE_2");
+        //fsm.registerDefaultTransition("STATE_2", "STATE_3");
+        fsm.registerDefaultTransition("STATE_2", "STATE_3");
+        fsm.registerDefaultTransition("STATE_3", "STATE_1");
+        
+        this.addBehaviour(fsm);
+        
+        
+     
 
-        this.addBehaviour(new RequestResponseBehaviour(this, mt));
         
         
-	this.addBehaviour(new MainLoopBehaviour(this, 1000));
+        
+        
+/*
+        	// State names
+	String STATE_A = "A";
+	String STATE_B = "B";
+	String STATE_C = "C";
+	String STATE_D = "D";
+	String STATE_E = "E";
+	String STATE_F = "F";
+        
+*/	
+	/**
+	   Inner class NamePrinter.
+	   This behaviour just prints its name
+	 */
+/*
+	class NamePrinter extends OneShotBehaviour {
+		public void action() {
+			System.out.println("Executing behaviour "+getBehaviourName());
+		}
+	}
+/*        
+	/*
+	   Inner class RandomGenerator.
+	   This behaviour prints its name and exits with a random value
+	   between 0 and a given integer value
+	 */
+
+/*	class RandomGenerator extends NamePrinter {
+		private int maxExitValue;
+		private int exitValue;
 		
+		private RandomGenerator(int max) {
+			super();
+			maxExitValue = max;
+		}
+		
+		public void action() {
+			System.out.println("Executing behaviour "+getBehaviourName());
+			exitValue = (int) (Math.random() * maxExitValue);
+			System.out.println("Exit value is "+exitValue);
+		}
+		
+		public int onEnd() {
+			return exitValue;
+		}
+	}
+	
+
+		FSMBehaviour fsm = new FSMBehaviour(this) {
+			public int onEnd() {
+				System.out.println("FSM behaviour completed.");
+				myAgent.doDelete();
+				return super.onEnd();
+			}
+		};
+		
+		// Register state A (first state)
+		fsm.registerFirstState(new NamePrinter(), STATE_A);
+		
+		// Register state B
+		fsm.registerState(new NamePrinter(), STATE_B);
+		
+		// Register state C
+		fsm.registerState(new RandomGenerator(3), STATE_C);
+		
+		// Register state D
+		fsm.registerState(new NamePrinter(), STATE_D);
+		
+		// Register state E
+		fsm.registerState(new RandomGenerator(4), STATE_E);
+		
+		// Register state F (final state)
+		fsm.registerLastState(new NamePrinter(), STATE_F);
+
+		// Register the transitions
+		fsm.registerDefaultTransition(STATE_A, STATE_B);
+		fsm.registerDefaultTransition(STATE_B, STATE_C);
+		fsm.registerTransition(STATE_C, STATE_C, 0);
+		fsm.registerTransition(STATE_C, STATE_D, 1);
+		fsm.registerTransition(STATE_C, STATE_A, 2);
+		fsm.registerDefaultTransition(STATE_D, STATE_E);
+		fsm.registerTransition(STATE_E, STATE_F, 3);
+		fsm.registerDefaultTransition(STATE_E, STATE_B);
+		
+		addBehaviour(fsm);
+	
+*/
+
 	System.out.println("Setup finished\n");
         // Setup finished. When the last inform is received, the agent itself will add
-        // a behaviour to send/receive actions
-        
-  
-        Cell [][] x;
-        x = game.getMap();
-        
-        
-        System.out.println(x.length);
-        
-        System.out.println(x[3][3]);
-        
-        System.out.println(x[16][9].getCellType());
-        
-        moveAgent();
-        
+        // a behaviour to send/receive actions  
     }
     
-    public void moveAgent() {
-        InfoAgent info, info2;
-        boolean is, found;
-        int i,j, ri, rj, end, imax, jmax;
-        end = 0;
-        Random rand = new Random();
-
-        Cell [][] mapa;
-        mapa = game.getMap();
-        imax = mapa.length;
-        jmax = mapa[0].length;
-        Map listOfAgents = game.getAgentList();
-        Set<AgentType> setOfAgents = listOfAgents.keySet();
-        HashMap newListOfAgents; // We need to create another list of agents and update it.
-        newListOfAgents = new HashMap<AgentType, List<Cell>>();
-        List<Cell> newCells; // The list of agents is a map of AgentType and list of cells.
-        StreetCell ce;
-
-        for (AgentType at : setOfAgents){
-        List<Cell> cells = (List<Cell>)listOfAgents.get(at);  
-        newCells = new ArrayList<Cell>(); // For every agentType we change the list of cells.
-            for (Cell c : cells){
-                found = false;
-                i = c.getRow();
-                j = c.getCol();
-                //is = x[i][j].isThereAnAgent();
-                if (mapa[i][j] instanceof StreetCell) {
-                    info = ((StreetCell)mapa[i][j]).getAgent();
-                    info2 = ((StreetCell)mapa[i][j]).getAgent();
-                    is = ((StreetCell)mapa[i][j]).isThereAnAgent();
-                    System.out.println(is);
-                    System.out.println(info);
-                    try {
-                        ((StreetCell)mapa[i][j]).removeAgent(info);
-                    }catch(Exception e){
-                        //System.err.println(e);
-                    }
-                    is = ((StreetCell)mapa[i][j]).isThereAnAgent();
-                    System.out.println(is);
-
-                    while (!found) {
-                        ri  = rand.nextInt(imax) + 0;
-                        rj  = rand.nextInt(jmax) + 0;
-                        //*max is the maximum and the 0 is our minimum 
-                        if (mapa[ri][rj].getCellType().toString() == "STREET" && !((StreetCell)mapa[ri][rj]).isThereAnAgent()) {
-                            found = true;
-                            try {
-                                ((StreetCell)mapa[ri][rj]).addAgent(info2);
-                            }catch(Exception e){
-                            //System.err.println(e);
-                            }
-                            newCells.add(mapa[ri][rj]);
-                        }
-                    }
-                }
-            }
-            newListOfAgents.put(at, newCells);
-        }  
-        game.setAgentList(newListOfAgents);
-        end++;
-    }
-    
-    
-    private class MainLoopBehaviour extends TickerBehaviour {
-
-		public MainLoopBehaviour(Agent a, long period) {
-			super(a, period);
-		}
-
-		@Override
-		protected void onTick() {		
-                   moveAgent();
-                }
-    }
     
     public void updateGUI() {
         this.gui.updateGame();
