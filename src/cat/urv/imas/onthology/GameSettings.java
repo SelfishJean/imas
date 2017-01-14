@@ -57,6 +57,10 @@ public class GameSettings implements java.io.Serializable {
      */
     private int simulationSteps = 100;
     /**
+     * Current simulation step.
+     */
+    private int currentSimulationStep = 1;
+    /**
      * City map.
      */
     protected Cell[][] map;
@@ -126,6 +130,12 @@ public class GameSettings implements java.io.Serializable {
 
     public int getSimulationSteps() {
         return simulationSteps;
+    }
+    
+    public int getCurrentSimulationStep() {
+        int temp = currentSimulationStep;
+        currentSimulationStep++;
+        return temp;
     }
 
     @XmlElement(required = true)

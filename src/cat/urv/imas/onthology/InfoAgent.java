@@ -20,6 +20,22 @@ public class InfoAgent implements java.io.Serializable {
      * AID for the related agent.
      */
     private AID aid;
+    /**
+     * Column in the map for the related agent.
+     */
+    private int column;
+    /**
+     * Row in the map for the related agent.
+     */
+    private int row;
+    /**
+     * Previous column in the map for the related agent.
+     */
+    private int preColumn;
+    /**
+     * Previous row in the map for the related agent.
+     */
+    private int preRow;
 
     /**
      * Building new instance with only the type.
@@ -83,6 +99,80 @@ public class InfoAgent implements java.io.Serializable {
     public void setAID(AID aid) {
         this.aid = aid;
     }
+    
+     /**
+     * Gets agent column.
+     *
+     * @return agent current column.
+     */
+    public int getColumn() {
+        return this.column;
+    }
+
+    /**
+     * Sets the agent column.
+     *
+     * @param int agent current column.
+     */
+    public void setColumn(int column) {
+        this.column = column;
+    }
+    
+    /**
+     * Gets previous agent column.
+     *
+     * @return agent previous column.
+     */
+    public int getPreColumn() {
+        return this.preColumn;
+    }
+
+    /**
+     * Sets the previous agent column.
+     *
+     * @param int agent previous column.
+     */
+    public void setPreColumn(int column) {
+        this.preColumn = column;
+    }
+    
+     /**
+     * Gets agent row.
+     *
+     * @return agent current row.
+     */
+    public int getRow() {
+        return this.row;
+    }
+
+    /**
+     * Sets the agent row.
+     *
+     * @param int agent current row.
+     */
+    public void setRow(int row) {
+        this.row = row;
+    }
+    
+    /**
+     * Gets agent previous row.
+     *
+     * @return agent previous row.
+     */
+    public int getPreRow() {
+        return this.preRow;
+    }
+
+    /**
+     * Sets the agent previous row.
+     *
+     * @param int agent previous row.
+     */
+    public void setPreRow(int row) {
+        this.preRow = row;
+    }
+    
+
 
     /**
      * Type of agent.

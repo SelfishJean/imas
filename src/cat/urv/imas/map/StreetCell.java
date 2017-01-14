@@ -19,6 +19,7 @@ package cat.urv.imas.map;
 
 import cat.urv.imas.gui.CellVisualizer;
 import cat.urv.imas.onthology.InfoAgent;
+import jade.core.*;
 
 /**
  * This class keeps information about a street cell in the map.
@@ -57,7 +58,7 @@ public class StreetCell extends Cell {
      * @throws Exception
      */
     public void addAgent(InfoAgent newAgent) throws Exception {
-        System.out.println("Add an agent to " + this + "<--" + newAgent);
+        //System.out.println("Add an agent to " + this + "<--" + newAgent);
         if (this.isThereAnAgent()) {
             throw new Exception("Full STREET cell");
         }
@@ -71,17 +72,44 @@ public class StreetCell extends Cell {
     public void removeAgent(InfoAgent oldInfoAgent) throws Exception {
         //System.out.println("Remove an agent to " + this.toString());
         if (!this.isThereAnAgent()) {
+            System.out.println("From removeAgent method...");
             throw new Exception("There is no agent in cell");
         }
-        if (oldInfoAgent != null) {
+        if (oldInfoAgent == null) {
+            System.out.println("From removeAgent method...");
             throw new Exception("No valid agent to be remove (null).");
-        } else if (!oldInfoAgent.equals(agent)) {
+        } 
+/* With this statement does not work..
+        if (!this.agent.equals(oldInfoAgent)) {
+            System.out.println("From removeAgent method...");
             throw new Exception("No matching agent to be remove.");
-        }
+        } 
+*/        
         // if everything is OK, we remove the agent from the cell
         this.agent = null;
-    }
+        //System.out.println("From removeAgent method...");
+        //System.out.println(this.isThereAnAgent());
 
+
+        // if everything is OK, we remove the agent from the cell
+        /*this.agent = null;
+        System.out.println("From removeAgent method...");
+        System.out.println(this.isThereAnAgent());*/
+
+    }
+    
+    public void removeAgentWithAID(AID currentAgent) {
+            try{
+                    if(this.agent != null){
+                            if(currentAgent.equals(this.agent.getAID())){
+                                    this.agent = null;
+                            }
+                    }
+            } catch(Exception e){
+                    System.err.println(e);
+            }
+    }
+        
     /**
      * Get the current agent from this cell.
      *

@@ -14,6 +14,7 @@ import jade.lang.acl.*;
 import java.util.ArrayList;
 import cat.urv.imas.agent.*;
 import cat.urv.imas.onthology.GameSettings;
+import jade.core.Agent;
 /**
  *
  * @author Alex
@@ -27,10 +28,10 @@ public class WaitForMapBehaviour extends SimpleBehaviour
     {
         super(a);
         
+        // We set the value of the first message.
         ACLMessage initialRequest = new ACLMessage(ACLMessage.REQUEST);
         initialRequest.clearAllReceiver();
-        
-        CoordinatorAgent agent = (CoordinatorAgent) myAgent;
+        CoordinatorAgent agent = (CoordinatorAgent) this.getAgent();
         initialRequest.addReceiver(agent.systemAgent);
         initialRequest.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
         agent.log("Request message to agent");
@@ -43,46 +44,60 @@ public class WaitForMapBehaviour extends SimpleBehaviour
         }
         
         this.msg = initialRequest;
-        hasReply = false;
-        myAgent.send(msg);
     }
     
     @Override
     public void action() 
     { 
+        System.out.println("Starting WaitForMapBehaviour");
+        CoordinatorAgent agent = (CoordinatorAgent) this.getAgent();
+
+        hasReply = false;
+        myAgent.send(msg);
+        
         while(done() == false) 
         {
             ACLMessage response = myAgent.receive();
 
             if(response != null) 
             {
-                CoordinatorAgent agent = (CoordinatorAgent) myAgent;
+                //System.out.println(response.getPerformative());
+                //CoordinatorAgent agent = (CoordinatorAgent) myAgent;
+                //CoordinatorAgent agent = (CoordinatorAgent) this.getAgent();
                 switch(response.getPerformative()) 
                 {
+                    case ACLMessage.AGREE:
+                        agent.log("AGREE received from " + ((AID) response.getSender()).getLocalName());
+                        break;
                     case ACLMessage.INFORM:
-                        agent.log("INFORM (new map) received from " + ((AID) msg.getSender()).getLocalName());
+                        agent.log("INFORM (new map) received from " + ((AID) response.getSender()).getLocalName());
+                        hasReply = true;
                         try 
                         {
-                            GameSettings game = (GameSettings) msg.getContentObject();
+                            GameSettings game = (GameSettings) response.getContentObject();
                             agent.setGame(game);
                             agent.log(game.getShortString());
-                            agent.sentNewPositions = false;
+                            
                         } 
                         catch (Exception e) 
                         {
                             agent.errorLog("Incorrect content: " + e.toString());
                         }
                         break;
+                    case ACLMessage.FAILURE:
+                        agent.log("The action has failed.");
+                        break;
                     default:
                         agent.log("Failed to process the message");
                         break;
                 }
 
-                hasReply = true;
+                
             }
         }
     }
     
+    @Override
     public boolean done() 
     {
         return hasReply;
@@ -91,6 +106,8 @@ public class WaitForMapBehaviour extends SimpleBehaviour
     public int onEnd() 
     {
         hasReply = false;
+        //System.out.println("End of"+getBehaviourName());
         return 0;
     }
+
 }

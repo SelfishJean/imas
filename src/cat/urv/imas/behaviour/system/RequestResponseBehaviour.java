@@ -18,15 +18,20 @@
 package cat.urv.imas.behaviour.system;
 
 import cat.urv.imas.agent.AgentType;
+import cat.urv.imas.agent.CoordinatorAgent;
 import jade.lang.acl.ACLMessage;
+import jade.core.behaviours.*;
 import jade.lang.acl.MessageTemplate;
 import jade.proto.AchieveREResponder;
 import cat.urv.imas.agent.SystemAgent;
 import cat.urv.imas.map.Cell;
 import cat.urv.imas.map.StreetCell;
+import cat.urv.imas.onthology.GameSettings;
 import cat.urv.imas.onthology.MessageContent;
+import jade.core.AID;
 import java.util.List;
 import java.util.Map;
+import jade.core.Agent;
 
 /**
  * A request-responder behaviour for System agent, answering to queries
@@ -34,84 +39,85 @@ import java.util.Map;
  * game information and the System Agent sends an AGREE and then an INFORM
  * with the city information.
  */
-public class RequestResponseBehaviour extends AchieveREResponder {
-
-    /**
-     * Sets up the System agent and the template of messages to catch.
-     *
-     * @param agent The agent owning this behaviour
-     * @param mt Template to receive future responses in this conversation
-     */
-    public RequestResponseBehaviour(SystemAgent agent, MessageTemplate mt) {
-        super(agent, mt);
-        agent.log("Waiting REQUESTs from authorized agents");
+public class RequestResponseBehaviour extends SimpleBehaviour 
+{
+    boolean hasReply;
+    
+    public RequestResponseBehaviour(Agent agent) 
+    {
+        super(agent);
+        hasReply = false;
+        //agent.log("Waiting REQUESTs of the map from authorized agents");
+        System.out.println("(SystemAgent) Waiting REQUESTs of the map from authorized agents");
     }
 
-    /**
-     * When System Agent receives a REQUEST message, it agrees. Only if
-     * message type is AGREE, method prepareResultNotification() will be invoked.
-     * 
-     * @param msg message received.
-     * @return AGREE message when all was ok, or FAILURE otherwise.
-     */
     @Override
-    protected ACLMessage prepareResponse(ACLMessage msg) {
-        SystemAgent agent = (SystemAgent)this.getAgent();
-        ACLMessage reply = msg.createReply();
-        try {
-            Object content = (Object) msg.getContent();
-            if (content.equals(MessageContent.GET_MAP)) {
-                agent.log("Request received");
-                reply.setPerformative(ACLMessage.AGREE);
+    public void action() 
+    { 
+        System.out.println("Starting RequestResponseBehaviour");
+        //boolean communicationOK = false;
+        while(done() == false) 
+        {
+            ACLMessage response = myAgent.receive();
+            //System.out.println(response.getPerformative());
+            if(response != null && response.getPerformative() == ACLMessage.REQUEST) 
+            {
+                hasReply = true;
+                //SystemAgent agent = (SystemAgent)myAgent;
+                SystemAgent agent = (SystemAgent)this.getAgent();
+                ACLMessage reply = response.createReply();
+                try 
+                {
+                    Object content = (Object) response.getContent();
+                    if (content.equals(MessageContent.GET_MAP)) 
+                    {
+                        agent.log("Request received from " + ((AID) response.getSender()).getLocalName());
+                        // Sending an Agree..
+                        reply.setPerformative(ACLMessage.AGREE);
+                        agent.log("Sending Agreement");
+                        agent.send(reply);
+                        
+                        // Sending the Map..
+                        ACLMessage reply2 = response.createReply();
+                        reply2.setPerformative(ACLMessage.INFORM);
+
+                        try {
+                                reply2.setContentObject(agent.getGame());
+                        } catch (Exception e) {
+                                reply2.setPerformative(ACLMessage.FAILURE);
+                                System.err.println(e.toString());
+                                e.printStackTrace();
+                        }
+                        agent.log("Sending Map Setings");
+                        agent.send(reply2);
+                    }
+                } 
+                catch (Exception e) 
+                {
+                    reply.setPerformative(ACLMessage.FAILURE);
+                    agent.errorLog(e.getMessage());
+                    e.printStackTrace();
+                }
+                //agent.log("Response being prepared");
+                //agent.send(reply);
+                
+                //hasReply = true;
             }
-        } catch (Exception e) {
-            reply.setPerformative(ACLMessage.FAILURE);
-            agent.errorLog(e.getMessage());
-            e.printStackTrace();
         }
-        agent.log("Response being prepared");
-        return reply;
     }
-
-    /**
-     * After sending an AGREE message on prepareResponse(), this behaviour
-     * sends an INFORM message with the whole game settings.
-     * 
-     * NOTE: This method is called after the response has been sent and only when one
-     * of the following two cases arise: the response was an agree message OR no
-     * response message was sent. 
-     *
-     * @param msg ACLMessage the received message
-     * @param response ACLMessage the previously sent response message
-     * @return ACLMessage to be sent as a result notification, of type INFORM
-     * when all was ok, or FAILURE otherwise.
-     */
+    
     @Override
-    protected ACLMessage prepareResultNotification(ACLMessage msg, ACLMessage response) {
-
-        // it is important to make the createReply in order to keep the same context of
-        // the conversation
-        SystemAgent agent = (SystemAgent)this.getAgent();
-        ACLMessage reply = msg.createReply();
-        reply.setPerformative(ACLMessage.INFORM);
-
-        try {
-            reply.setContentObject(agent.getGame());
-        } catch (Exception e) {
-            reply.setPerformative(ACLMessage.FAILURE);
-            agent.errorLog(e.toString());
-            e.printStackTrace();
-        }
-        agent.log("Game settings sent");
-        return reply;
-
+    public boolean done() 
+    {
+        return hasReply;
     }
-
-    /**
-     * No need for any specific action to reset this behaviour
-     */
-    @Override
-    public void reset() {
+    
+    
+    public int onEnd() 
+    {
+        //System.out.println("End of RequestResponseBehaviour");
+        hasReply = false;
+        return 0;
     }
-
+    
 }

@@ -5,10 +5,17 @@
  */
 package cat.urv.imas.onthology;
 
+import cat.urv.imas.agent.AgentType;
+import cat.urv.imas.map.Cell;
+import cat.urv.imas.map.StreetCell;
+import cat.urv.imas.gui.*;
 import static cat.urv.imas.onthology.InitialGameSettings.*;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
@@ -94,13 +101,15 @@ public class GenerateGameSettings {
      *
      * @param args nothing expected.
      */
-    public static final void main(String[] args) {
+    public static final void main(String[] args) throws Exception {
         InitialGameSettings settings = new InitialGameSettings();
-
+        
         defineSettings(settings);
         storeSettings(settings);
+        
         testSettings();
     }
+
 
     /**
      * Produces an XML file with the whole set of settings from the given

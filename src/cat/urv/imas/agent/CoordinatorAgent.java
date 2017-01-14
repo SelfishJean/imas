@@ -161,15 +161,21 @@ public class CoordinatorAgent extends ImasAgent {
                     }
         };
         
-        fsm.registerState(new WaitForMapBehaviour(this), "STATE_1");
-        fsm.registerFirstState(new GenerateNewPositionsBehaviour(this), "STATE_2");
+        fsm.registerFirstState(new WaitForMapBehaviour(this), "STATE_1");
+        fsm.registerState(new GenerateNewPositionsBehaviour(this), "STATE_2");
+        fsm.registerState(new WaitForNewSimulationStepBehaviour(this), "STATE_3");
+        fsm.registerState(new WaitForMapBehaviour(this), "STATE_4");
+        
         //fsm.registerState(new AuxiliarSimpleBehaviour(this), "STATE_3");
         
         //fsm.registerState(new NewPositions(this), "STATE_2");
         //fsm.registerState(new UpdateMapBehaviour(this), "STATE_3");
         
         fsm.registerDefaultTransition("STATE_1", "STATE_2");
-        fsm.registerDefaultTransition("STATE_2", "STATE_1");
+        //fsm.registerDefaultTransition("STATE_2", "STATE_1", new String[] {"STATE_1"});
+        fsm.registerDefaultTransition("STATE_2", "STATE_3");
+        fsm.registerDefaultTransition("STATE_3", "STATE_4", new String[] {"STATE_4"});
+        fsm.registerDefaultTransition("STATE_4", "STATE_2");
         //fsm.registerDefaultTransition("STATE_3", "STATE_1");
         //fsm.registerDefaultTransition("STATE_3", "STATE_2");
         //fsm.registerDefaultTransition("STATE_4", "STATE_2");

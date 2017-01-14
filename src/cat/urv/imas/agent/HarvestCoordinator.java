@@ -78,7 +78,7 @@ public class HarvestCoordinator extends ImasAgent {
         // searchAgent is a blocking method, so we will obtain always a correct AID
 
         /* ********************************************************************/
-        ACLMessage initialRequest = new ACLMessage(ACLMessage.REQUEST);
+    /*    ACLMessage initialRequest = new ACLMessage(ACLMessage.REQUEST);
         initialRequest.clearAllReceiver();
         initialRequest.addReceiver(this.harvestCoordinator);
         initialRequest.setProtocol(InteractionProtocol.FIPA_REQUEST);
@@ -89,7 +89,7 @@ public class HarvestCoordinator extends ImasAgent {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
+*/
         //we add a behaviour that sends the message and waits for an answer
         // this.addBehaviour(new RequesterBehaviour(this, initialRequest));
 

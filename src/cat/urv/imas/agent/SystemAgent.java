@@ -309,15 +309,21 @@ public class SystemAgent extends ImasAgent {
         
         fsm.registerFirstState(new RequestResponseBehaviour(this), "STATE_1");
         //fsm.registerState(new UpdateMapBehaviour(this, NewStepRequest), "STATE_2");
-        fsm.registerState(new UpdateMapResponseBehaviour(this), "STATE_2");
-        fsm.registerState(new UpdateSimulationBehaviour(this), "STATE_3");
-        
+        //fsm.registerState(new UpdateMapResponseBehaviour(this), "STATE_2");
+        //fsm.registerState(new UpdateSimulationBehaviour(this), "STATE_3");
+        //fsm.registerState(new AuxiliarSimpleBehaviour(this), "STATE_2");
+        fsm.registerState(new RequestForNewSimulationStepBehaviour(this), "STATE_2");
+        fsm.registerState(new RequestResponseBehaviour(this), "STATE_3");
         
         
         fsm.registerDefaultTransition("STATE_1", "STATE_2");
+        //fsm.registerDefaultTransition("STATE_2", "STATE_1", new String[] {"STATE_1"});
+        fsm.registerDefaultTransition("STATE_2", "STATE_3", new String[] {"STATE_3"});
+        fsm.registerDefaultTransition("STATE_3", "STATE_2", new String[] {"STATE_2"});
+        
         //fsm.registerDefaultTransition("STATE_2", "STATE_3");
-        fsm.registerDefaultTransition("STATE_2", "STATE_3");
-        fsm.registerDefaultTransition("STATE_3", "STATE_1");
+        //fsm.registerDefaultTransition("STATE_3", "STATE_1");
+        
         
         this.addBehaviour(fsm);
         
