@@ -110,7 +110,7 @@ public class RequestForNewSimulationStepBehaviour extends SimpleBehaviour
 
      public void moveAgents() {
         InfoAgent info;
-        int i,j, ri, rj, imax, jmax;
+        int i,j, g, ri, rj, imax, jmax;
 
         Cell [][] mapa;
         SystemAgent agent = (SystemAgent)this.getAgent();
@@ -123,33 +123,57 @@ public class RequestForNewSimulationStepBehaviour extends SimpleBehaviour
         newListOfAgents = new HashMap<AgentType, List<Cell>>();
         List<Cell> newCellsSC; // The list of agents is a map of AgentType and list of cells.
         List<Cell> newCellsH; // The list of agents is a map of AgentType and list of cells.
- 
+
         newCellsSC = new ArrayList<Cell>(); // For every agentType we change the list of cells.
         newCellsH = new ArrayList<Cell>(); // For every agentType we change the list of cells.
-        
+        int cont = 1;
         for (InfoAgent ag : agent.newInfoAgent) {
+            System.out.println("(RequestForNewSimulation) "+ag+" "+cont);
             i = ag.getPreRow();
             j = ag.getPreColumn();
             if (mapa[i][j] instanceof StreetCell) {
-                info = ((StreetCell)mapa[i][j]).getAgent();
-                ((StreetCell)mapa[i][j]).removeAgentWithAID(ag.getAID());
                 ri = ag.getRow();
                 rj = ag.getColumn();
-                try {
-                    ((StreetCell)mapa[ri][rj]).addAgent(ag);
-                }catch(Exception e){
-                //System.err.println(e);
-                }
+                info = ((StreetCell)mapa[i][j]).getAgent();
                 
-                if (ag.getType().equals(AgentType.SCOUT)) {
-                    newCellsSC.add(mapa[ri][rj]);
-                }else {
-                    newCellsH.add(mapa[ri][rj]);
-                }  
+                if (((StreetCell)mapa[ri][rj]).isThereAnAgent()) // If there is an Agent in the future cell we do not move the agent.
+                {
+                    // Modifying the new list of agents but with the same position.
+                    if (ag.getType().equals(AgentType.SCOUT)) 
+                    {
+                        newCellsSC.add(mapa[i][j]);
+                    }else if (ag.getType().equals(AgentType.HARVESTER)) 
+                    {
+                        newCellsH.add(mapa[i][j]);
+                    }   
+                }
+                else 
+                {
+                    ((StreetCell)mapa[i][j]).removeAgentWithAID(ag.getAID());
+
+                    System.out.println("(RequestForNewSimulation CELL) "+ri+" "+rj);
+                    try {
+                        ((StreetCell)mapa[ri][rj]).addAgent(ag);
+                    }catch(Exception e){
+                    //System.err.println(e);
+                    }
+
+                    if (ag.getType().equals(AgentType.SCOUT)) 
+                    {
+                        newCellsSC.add(mapa[ri][rj]);
+                    }else if (ag.getType().equals(AgentType.HARVESTER)) 
+                    {
+                        newCellsH.add(mapa[ri][rj]);
+                    }  
+                }
+
             }
         }
+        
         newListOfAgents.put(AgentType.SCOUT, newCellsSC);
+
         newListOfAgents.put(AgentType.HARVESTER, newCellsH);
+        
 
         agent.getGame().setAgentList(newListOfAgents);
     }
