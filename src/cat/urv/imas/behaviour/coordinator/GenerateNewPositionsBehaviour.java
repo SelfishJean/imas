@@ -67,7 +67,9 @@ public class GenerateNewPositionsBehaviour extends SimpleBehaviour {
         for (AgentType at : setOfAgents){
         List<Cell> cells = (List<Cell>)listOfAgents.get(at);  
         newCells = new ArrayList<Cell>(); // For every agentType we change the list of cells.
+        int cont = 1;
             for (Cell c : cells){
+                System.out.println("(GenerateNewPosition) "+at+" "+cont);
                 i = c.getRow();
                 j = c.getCol();
                 //is = x[i][j].isThereAnAgent();
@@ -77,11 +79,12 @@ public class GenerateNewPositionsBehaviour extends SimpleBehaviour {
                     infoCopy = ((StreetCell)mapa[i][j]).getAgent();
                     
                     while (!found) {
-                        ri  = rand.nextInt(imax) + 0;
-                        rj  = rand.nextInt(jmax) + 0;
+                        ri  = Math.abs(rand.nextInt(imax)) + 0;
+                        rj  = Math.abs(rand.nextInt(jmax)) + 0;
                         //*max is the maximum and the 0 is our minimum 
                         if (mapa[ri][rj].getCellType().toString() == "STREET" && !((StreetCell)mapa[ri][rj]).isThereAnAgent() && ri!=i && rj!=j) {
                             found = true;
+                            
                             
                             infoCopy.setRow(ri);
                             infoCopy.setColumn(rj);
