@@ -24,6 +24,7 @@ import jade.core.behaviours.*;
 import jade.lang.acl.MessageTemplate;
 import jade.proto.AchieveREResponder;
 import cat.urv.imas.agent.SystemAgent;
+import cat.urv.imas.map.BuildingCell;
 import cat.urv.imas.map.Cell;
 import cat.urv.imas.map.StreetCell;
 import cat.urv.imas.onthology.GameSettings;
@@ -35,6 +36,9 @@ import java.util.HashMap;
 import jade.core.Agent;
 import cat.urv.imas.onthology.InfoAgent;
 import java.util.ArrayList;
+import cat.urv.imas.map.SettableBuildingCell;
+import cat.urv.imas.onthology.GarbageType;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * A request-responder behaviour for System agent, answering to queries
@@ -83,6 +87,8 @@ public class RequestForNewSimulationStepBehaviour extends SimpleBehaviour
                     reply2.setPerformative(ACLMessage.INFORM);
 
                     try {
+                        spawnGarbage();
+                        agent.log("Garbage spread");
                         moveAgents();
                         agent.log("Map updated");
                         reply2.setContent(MessageContent.NEXT_STEP);
@@ -127,8 +133,9 @@ public class RequestForNewSimulationStepBehaviour extends SimpleBehaviour
         newCellsSC = new ArrayList<Cell>(); // For every agentType we change the list of cells.
         newCellsH = new ArrayList<Cell>(); // For every agentType we change the list of cells.
         int cont = 1;
+        //System.out.println("(size of list of agents) "+agent.newInfoAgent.size());
         for (InfoAgent ag : agent.newInfoAgent) {
-            System.out.println("(RequestForNewSimulation) "+ag+" "+cont);
+            //System.out.println("(RequestForNewSimulation) "+ag+" "+cont);
             i = ag.getPreRow();
             j = ag.getPreColumn();
             if (mapa[i][j] instanceof StreetCell) {
@@ -151,7 +158,7 @@ public class RequestForNewSimulationStepBehaviour extends SimpleBehaviour
                 {
                     ((StreetCell)mapa[i][j]).removeAgentWithAID(ag.getAID());
 
-                    System.out.println("(RequestForNewSimulation CELL) "+ri+" "+rj);
+                    //System.out.println("(RequestForNewSimulation CELL) "+ri+" "+rj);
                     try {
                         ((StreetCell)mapa[ri][rj]).addAgent(ag);
                     }catch(Exception e){
@@ -171,13 +178,70 @@ public class RequestForNewSimulationStepBehaviour extends SimpleBehaviour
         }
         
         newListOfAgents.put(AgentType.SCOUT, newCellsSC);
-
+        //System.out.println("(size of new list of agents) "+newCellsSC.size());
         newListOfAgents.put(AgentType.HARVESTER, newCellsH);
+        //System.out.println("(size of new list of agents) "+newCellsH.size());
         
 
         agent.getGame().setAgentList(newListOfAgents);
     }
-    
+
+    public void spawnGarbage()
+    {
+        SystemAgent agent = (SystemAgent)this.getAgent();
+        Cell [][] mapa;
+        GameSettings game;
+        game = agent.getGame();
+        mapa = game.getMap();
+        
+        int prob = game.getNewGarbageProbability();
+        int max = game.getMaxAmountOfNewGargabe();
+        int limit = game.getMaxNumberBuildingWithNewGargabe();
+
+        int rand = ThreadLocalRandom.current().nextInt(0, 101);
+        if(rand > prob) // Not always we spawn garbage, it can be that we do not do it. 
+        {
+            return;
+        }
+       
+        String[] types = {"G", "P", "L"};
+        int type;
+        for(int i = 0; i < mapa.length; ++i)
+        {
+            for(int j = 0; j < mapa[i].length; ++j)
+            {
+                if (mapa[i][j] instanceof SettableBuildingCell) 
+                {
+                    BuildingCell cell = (BuildingCell) mapa[i][j]; 
+                    Map<GarbageType,Integer> garbage;
+                    garbage = cell.detectGarbage();
+                    
+                    if(mapa[i][j] instanceof SettableBuildingCell && limit > 0)
+                    {
+                        System.out.println("+++++++++++++++++++Spreading garbage...");
+                        if (garbage.isEmpty())
+                        {
+                            System.out.println("+++++++++++++++++++(empty building)...");
+                            rand = ThreadLocalRandom.current().nextInt(1, max + 1);
+                            type = ThreadLocalRandom.current().nextInt(0, 3);
+                            SettableBuildingCell temp = (SettableBuildingCell) mapa[i][j];
+                            temp.setGarbage(GarbageType.fromShortString(types[type]), rand);
+                        }
+                        else
+                        {
+                            System.out.println("+++++++++++++++++++(NOT empty building)... "+garbage.keySet().iterator().next().getShortString()+":"+garbage.values().iterator().next());
+                        }
+                        
+                        limit -= 1;
+                    }
+                    
+                }
+
+            }
+        }
+    }
+     
+     
     
     @Override
     public boolean done() 
