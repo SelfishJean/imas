@@ -18,23 +18,112 @@
 package cat.urv.imas.agent;
 
 import static cat.urv.imas.agent.ImasAgent.OWNER;
+import cat.urv.imas.behaviour.harvesterCoordinator.*;
+import cat.urv.imas.map.Cell;
+import cat.urv.imas.map.StreetCell;
+import cat.urv.imas.onthology.GameSettings;
+import cat.urv.imas.onthology.InfoAgent;
+import cat.urv.imas.onthology.InfoDiscovery;
 import cat.urv.imas.onthology.MessageContent;
 import jade.core.*;
+import jade.core.behaviours.FSMBehaviour;
 import jade.domain.*;
 import jade.domain.FIPAAgentManagement.*;
 import jade.domain.FIPANames.InteractionProtocol;
 import jade.lang.acl.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 public class HarvestCoordinator extends ImasAgent {
 
     /**
      * Game settings in use.
      */
-//    private GameSettings game;
+    public GameSettings game;
     /**
-     * System agent id.
+     * Coordinator agent id.
      */
-    private AID harvestCoordinator;
+    public AID coordinatorAgent;
+    /**
+     * NewInfoAgent. It contains the following information of all agents.
+     */
+    public ArrayList<InfoAgent> newInfoAgent;
+    /**
+     * ListOfHarvesters. It contains all information related to Harvester Agents.
+     */
+    public ArrayList<InfoAgent> harvesters;
+    /**
+     * InfoDiscovery. It contains all new discoveries of a turn.
+     */
+    public ArrayList<InfoDiscovery> newInfoDiscoveriesList;
+
+    
+        /**
+     * Update the game settings.
+     *
+     * @param game current game settings.
+     */
+    public void setGame(GameSettings game) {
+        this.game = game;
+    }
+
+    /**
+     * Gets the current game settings.
+     *
+     * @return the current game settings.
+     */
+    public GameSettings getGame() {
+        return this.game;
+    }
+    
+    /**
+     * Gets the next information for all agents.
+     *
+     * @return info ALL agentS (is a list). It has to be an ArrayList because List is not serializable.
+     */
+    public ArrayList<InfoAgent> getNewInfoAgent() {
+        return this.newInfoAgent;
+    }
+    
+    /**
+     * Update agent information.
+     *
+     * @param newInfo information of all agents for next simulation step.
+     */
+    public void setNewInfoAgent(ArrayList<InfoAgent> newInfo) {
+        try {
+            this.newInfoAgent.clear();
+        } catch (Exception e) {
+            
+        }
+        this.newInfoAgent = newInfo;
+    }
+    
+    /**
+     * Gets the info for new discoveries in this turn.
+     *
+     * @return info ALL discoveries (is a list). It has to be an ArrayList because List is not serializable.
+     */
+    public ArrayList<InfoDiscovery> getNewInfoDiscoveriesList() {
+        return this.newInfoDiscoveriesList;
+    }
+    
+    /**
+     * Update value of the discoveries of this turn.
+     *
+     * @param newInfo information about new discoveries discovered in this turn.
+     */
+    public void setNewInfoDiscoveriesList(ArrayList<InfoDiscovery> newInfo) {
+        try {
+            this.newInfoDiscoveriesList.clear();
+        } catch (Exception e) {
+            
+        }
+        this.newInfoDiscoveriesList = newInfo;
+    }
+    
 
     /**
      * Builds the coordinator agent.
@@ -43,6 +132,51 @@ public class HarvestCoordinator extends ImasAgent {
         super(AgentType.HARVESTER_COORDINATOR);
     }
 
+    /**
+     * Gets information for all harvesters.
+     *
+     * @return info ALL agentS (is a list). It has to be an ArrayList because List is not serializable.
+     */
+    public ArrayList<InfoAgent> getListHarvesters() {
+        return this.harvesters;
+    }
+    
+    /**
+     * Set the list of scouts.
+     *
+     * @param .
+     */
+    public void setListHarvesters(ArrayList<InfoAgent> hv) {
+        try {
+            this.harvesters.clear();
+        } catch (Exception e) {
+            
+        }
+        this.harvesters = hv;
+    }
+    
+    /**
+     * Builds a list of all HarvesterAgents.
+     */
+    public void initHarvesters()
+    {
+        Map listOfAgents = this.getGame().getAgentList();
+        List<Cell> positions = (List<Cell>) listOfAgents.get(AgentType.HARVESTER);
+        ArrayList<InfoAgent> allHarvesters;
+        allHarvesters = new ArrayList<InfoAgent>();
+        
+        for(Cell pos : positions)
+        {
+            StreetCell temp = (StreetCell) pos;
+            
+            if(temp.isThereAnAgent() == true)
+            {
+                allHarvesters.add(temp.getAgent());
+            }
+        }
+        this.setListHarvesters(allHarvesters);
+    }
+    
     /**
      * Agent setup method - called when it first come on-line. Configuration of
      * language to use, ontology and initialization of behaviours.
@@ -71,27 +205,38 @@ public class HarvestCoordinator extends ImasAgent {
             doDelete();
         }
 
-        // search SystemAgent
+        // search CoordinatorAgent
         ServiceDescription searchCriterion = new ServiceDescription();
-        searchCriterion.setType(AgentType.HARVESTER_COORDINATOR.toString());
-        this.harvestCoordinator = UtilsAgents.searchAgent(this, searchCriterion);
+        searchCriterion.setType(AgentType.COORDINATOR.toString());
+        this.coordinatorAgent = UtilsAgents.searchAgent(this, searchCriterion);
         // searchAgent is a blocking method, so we will obtain always a correct AID
 
-        /* ********************************************************************/
-    /*    ACLMessage initialRequest = new ACLMessage(ACLMessage.REQUEST);
-        initialRequest.clearAllReceiver();
-        initialRequest.addReceiver(this.harvestCoordinator);
-        initialRequest.setProtocol(InteractionProtocol.FIPA_REQUEST);
-        log("Request message to agent");
-        try {
-            initialRequest.setContent(MessageContent.GET_MAP);
-            log("Request message content:" + initialRequest.getContent());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-*/
-        //we add a behaviour that sends the message and waits for an answer
-        // this.addBehaviour(new RequesterBehaviour(this, initialRequest));
+        
+        // Finite State Machine
+        
+        FSMBehaviour fsm = new FSMBehaviour(this) {
+            public int onEnd() {
+                            System.out.println("(ScoutCoordinator) FSM behaviour completed.");
+                            myAgent.doDelete();
+                            return super.onEnd();
+                    }
+        };
+        
+        fsm.registerFirstState(new WaitingForMapBehaviour(this), "STATE_1");
+        fsm.registerState(new SendingMapBehaviour(this), "STATE_2");
+        fsm.registerState(new WaitingForNewDiscoveriesBehaviour(this), "STATE_3");
+        fsm.registerState(new GenerateNewPositionsBehaviour(this), "STATE_4");
+        fsm.registerState(new SendingNewPositionsBehaviour(this), "STATE_5");
+        fsm.registerFirstState(new WaitingForMapBehaviour(this), "STATE_6");
+        
+        fsm.registerDefaultTransition("STATE_1", "STATE_2");
+        fsm.registerDefaultTransition("STATE_2", "STATE_3");
+        fsm.registerDefaultTransition("STATE_3", "STATE_4");
+        fsm.registerDefaultTransition("STATE_4", "STATE_5");
+        fsm.registerDefaultTransition("STATE_5", "STATE_6", new String[] {"STATE_6"});
+        fsm.registerDefaultTransition("STATE_6", "STATE_2");
+        
+        this.addBehaviour(fsm);
 
         // setup finished. When we receive the last inform, the agent itself will add
         // a behaviour to send/receive actions

@@ -20,6 +20,7 @@ package cat.urv.imas.agent;
 import cat.urv.imas.onthology.GameSettings;
 import cat.urv.imas.behaviour.coordinator.*;
 import cat.urv.imas.onthology.InfoAgent;
+import cat.urv.imas.onthology.InfoDiscovery;
 import cat.urv.imas.onthology.MessageContent;
 import jade.core.*;
 import jade.core.behaviours.*;
@@ -46,9 +47,21 @@ public class CoordinatorAgent extends ImasAgent {
      */
     public AID systemAgent;
     /**
+     * ScoutCoordinator agent id.
+     */
+    public AID scoutCoordinator;
+    /**
+     * HarvesterCoordinator agent id.
+     */
+    public AID harvesterCoordinator;
+    /**
      * InfoAgent. It contains the following information of all agents.
      */
     public ArrayList<InfoAgent> newInfoAgent;
+    /**
+     * InfoDiscovery. It contains all new discoveries of a turn.
+     */
+    public ArrayList<InfoDiscovery> newInfoDiscoveriesList;
     /**
      * isMapUpdated. If the map has been already updated, then we can send the new positions
      * (we need it because we need to know the new map to modify the previous position
@@ -67,6 +80,29 @@ public class CoordinatorAgent extends ImasAgent {
     
     public boolean getUpdatedMap() {
         return this.updatedMap;
+    }
+    
+    /**
+     * Gets the info for new discoveries in this turn.
+     *
+     * @return info ALL discoveries (is a list). It has to be an ArrayList because List is not serializable.
+     */
+    public ArrayList<InfoDiscovery> getNewInfoDiscoveriesList() {
+        return this.newInfoDiscoveriesList;
+    }
+    
+    /**
+     * Update value of the discoveries of this turn.
+     *
+     * @param newInfo information about new discoveries discovered in this turn.
+     */
+    public void setNewInfoDiscoveriesList(ArrayList<InfoDiscovery> newInfo) {
+        try {
+            this.newInfoDiscoveriesList.clear();
+        } catch (Exception e) {
+            
+        }
+        this.newInfoDiscoveriesList = newInfo;
     }
     
     /**
@@ -111,10 +147,16 @@ public class CoordinatorAgent extends ImasAgent {
             doDelete();
         }
 
-        // search SystemAgent
+        // search all agents we need to talk to.
         ServiceDescription searchCriterion = new ServiceDescription();
         searchCriterion.setType(AgentType.SYSTEM.toString());
         this.systemAgent = UtilsAgents.searchAgent(this, searchCriterion);
+        searchCriterion = new ServiceDescription();
+        searchCriterion.setType(AgentType.SCOUT_COORDINATOR.toString());
+        this.scoutCoordinator = UtilsAgents.searchAgent(this, searchCriterion);
+        searchCriterion = new ServiceDescription();
+        searchCriterion.setType(AgentType.HARVESTER_COORDINATOR.toString());
+        this.harvesterCoordinator = UtilsAgents.searchAgent(this, searchCriterion);
         // searchAgent is a blocking method, so we will obtain always a correct AID
 
         /* ********************************************************************/
@@ -161,10 +203,14 @@ public class CoordinatorAgent extends ImasAgent {
                     }
         };
         
-        fsm.registerFirstState(new WaitForMapBehaviour(this), "STATE_1");
-        fsm.registerState(new GenerateNewPositionsBehaviour(this), "STATE_2");
-        fsm.registerState(new WaitForNewSimulationStepBehaviour(this), "STATE_3");
-        fsm.registerState(new WaitForMapBehaviour(this), "STATE_4");
+        fsm.registerFirstState(new AskingForMapBehaviour(this), "STATE_1");
+        //fsm.registerState(new GenerateNewPositionsBehaviour(this), "STATE_2");
+        fsm.registerState(new SendingMapBehaviour(this), "STATE_2");
+        fsm.registerState(new WaitingForNewDiscoveriesBehaviour(this), "STATE_3");
+        fsm.registerState(new SendingNewDiscoveriesBehaviour(this), "STATE_4");
+        fsm.registerState(new WaitingForNewPositionsBehaviour(this), "STATE_5");
+        fsm.registerState(new AskingForNewSimulationStepBehaviour(this), "STATE_6");
+        fsm.registerState(new AskingForMapBehaviour(this), "STATE_7");
         
         //fsm.registerState(new AuxiliarSimpleBehaviour(this), "STATE_3");
         
@@ -174,8 +220,11 @@ public class CoordinatorAgent extends ImasAgent {
         fsm.registerDefaultTransition("STATE_1", "STATE_2");
         //fsm.registerDefaultTransition("STATE_2", "STATE_1", new String[] {"STATE_1"});
         fsm.registerDefaultTransition("STATE_2", "STATE_3");
-        fsm.registerDefaultTransition("STATE_3", "STATE_4", new String[] {"STATE_4"});
-        fsm.registerDefaultTransition("STATE_4", "STATE_2");
+        fsm.registerDefaultTransition("STATE_3", "STATE_4");
+        fsm.registerDefaultTransition("STATE_4", "STATE_5");
+        fsm.registerDefaultTransition("STATE_5", "STATE_6");
+        fsm.registerDefaultTransition("STATE_6", "STATE_7", new String[] {"STATE_7"});
+        fsm.registerDefaultTransition("STATE_7", "STATE_2");
         //fsm.registerDefaultTransition("STATE_3", "STATE_1");
         //fsm.registerDefaultTransition("STATE_3", "STATE_2");
         //fsm.registerDefaultTransition("STATE_4", "STATE_2");
@@ -217,12 +266,16 @@ public class CoordinatorAgent extends ImasAgent {
      * @param newInfo information of all agents for next simulation step.
      */
     public void setNewInfoAgent(ArrayList<InfoAgent> newInfo) {
-        try {
-            this.newInfoAgent.clear();
-        } catch (Exception e) {
-            
-        }
         this.newInfoAgent = newInfo;
+    }
+    
+    /**
+     * Add new agent information.
+     *
+     * @param newInfo information of all agents for next simulation step.
+     */
+    public void addNewInfoAgent(ArrayList<InfoAgent> newInfo) {
+        this.newInfoAgent.addAll(newInfo);
     }
 
 }

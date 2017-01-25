@@ -18,7 +18,10 @@
 package cat.urv.imas.agent;
 
 import static cat.urv.imas.agent.ImasAgent.OWNER;
+import cat.urv.imas.behaviour.harvesterAgent.*;
+import cat.urv.imas.onthology.GameSettings;
 import jade.core.*;
+import jade.core.behaviours.FSMBehaviour;
 import jade.domain.*;
 import jade.domain.FIPAAgentManagement.*;
 
@@ -27,11 +30,29 @@ public class Harvester extends ImasAgent {
     /**
      * Game settings in use.
      */
-//    private GameSettings game;
+    public GameSettings game;
     /**
      * System agent id.
      */
-    private AID harvester;
+    private AID harvesterCoordinator;
+    
+    /**
+     * Update the game settings.
+     *
+     * @param game current game settings.
+     */
+    public void setGame(GameSettings game) {
+        this.game = game;
+    }
+
+    /**
+     * Gets the current game settings.
+     *
+     * @return the current game settings.
+     */
+    public GameSettings getGame() {
+        return this.game;
+    }
 
     /**
      * Builds the coordinator agent.
@@ -68,28 +89,28 @@ public class Harvester extends ImasAgent {
             doDelete();
         }
 
-        // search SystemAgent
+        // search HarvesterCoordinator
         ServiceDescription searchCriterion = new ServiceDescription();
-        searchCriterion.setType(AgentType.HARVESTER.toString());
-        this.harvester = UtilsAgents.searchAgent(this, searchCriterion);
+        searchCriterion.setType(AgentType.HARVESTER_COORDINATOR.toString());
+        this.harvesterCoordinator = UtilsAgents.searchAgent(this, searchCriterion);
         // searchAgent is a blocking method, so we will obtain always a correct AID
 
-        /* ********************************************************************/
-//        ACLMessage initialRequest = new ACLMessage(ACLMessage.REQUEST);
-//        initialRequest.clearAllReceiver();
-//        initialRequest.addReceiver(this.scout);
-//        initialRequest.setProtocol(InteractionProtocol.FIPA_REQUEST);
-//        log("Request message to agent");
-//        try {
-//            initialRequest.setContent(MessageContent.GET_MAP);
-//            log("Request message content:" + initialRequest.getContent());
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
 
-        //we add a behaviour that sends the message and waits for an answer
-//        this.addBehaviour(new RequesterBehaviour(this, initialRequest));
+        // Finite State Machine
+        
+        FSMBehaviour fsm = new FSMBehaviour(this) {
+            public int onEnd() {
+                            System.out.println("(HarvesterAgent) FSM behaviour completed.");
+                            myAgent.doDelete();
+                            return super.onEnd();
+                    }
+        };
+        
+        fsm.registerFirstState(new WaitingForMapBehaviour(this), "STATE_1");
+        
+        fsm.registerDefaultTransition("STATE_1", "STATE_1", new String[] {"STATE_1"});
 
+        this.addBehaviour(fsm);
         // setup finished. When we receive the last inform, the agent itself will add
         // a behaviour to send/receive actions
     }
