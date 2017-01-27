@@ -126,6 +126,20 @@ public class ScoutCoordinator extends ImasAgent {
         }
         this.newInfoDiscoveriesList = newInfo;
     }
+    /**
+     * Update value of the discoveries of this turn.
+     *
+     * @param newInfo information about new discoveries discovered in this turn.
+     */
+    public void addNewInfoDiscoveriesList(ArrayList<InfoDiscovery> newInfo) {
+        try { 
+            if (!this.newInfoDiscoveriesList.isEmpty()) // Even though we have initialized it in the previous step, it could be empty (No discoveries for previous scout)
+                this.newInfoDiscoveriesList.addAll(newInfo);                
+        }catch (Exception e) {
+            
+        }
+        this.newInfoDiscoveriesList = newInfo;
+    }
     
     /**
      * Gets information for all scouts.
@@ -222,7 +236,8 @@ public class ScoutCoordinator extends ImasAgent {
         
         fsm.registerFirstState(new WaitingForMapBehaviour(this), "STATE_1");
         fsm.registerState(new SendingMapBehaviour(this), "STATE_2");
-        fsm.registerState(new GenerateNewSimulatedDiscoveriesBehaviour(this), "STATE_3");
+        //fsm.registerState(new GenerateNewSimulatedDiscoveriesBehaviour(this), "STATE_3");
+        fsm.registerState(new WaitingForNewDiscoveriesBehaviour(this), "STATE_3");
         fsm.registerState(new SendingNewDiscoveriesBehaviour(this), "STATE_4");
         fsm.registerState(new GenerateNewPositionsBehaviour(this), "STATE_5");
         fsm.registerState(new SendingNewPositionsBehaviour(this), "STATE_6");

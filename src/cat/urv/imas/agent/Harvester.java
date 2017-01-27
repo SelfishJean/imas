@@ -19,7 +19,9 @@ package cat.urv.imas.agent;
 
 import static cat.urv.imas.agent.ImasAgent.OWNER;
 import cat.urv.imas.behaviour.harvesterAgent.*;
+import cat.urv.imas.map.Cell;
 import cat.urv.imas.onthology.GameSettings;
+import cat.urv.imas.onthology.MessageContent;
 import jade.core.*;
 import jade.core.behaviours.FSMBehaviour;
 import jade.domain.*;
@@ -32,9 +34,17 @@ public class Harvester extends ImasAgent {
      */
     public GameSettings game;
     /**
-     * System agent id.
+     * Harvester Coordinator id.
      */
-    private AID harvesterCoordinator;
+    public AID harvesterCoordinator;
+    /**
+     * Agent state {FREE || MOVING || COLLECTING || DUMPING}.
+     */
+    private String state;
+    /**
+     * New goal Cell (with garbage to collect or a recycling center to dump).
+     */
+    private Cell newGoalCell;
     
     /**
      * Update the game settings.
@@ -53,7 +63,43 @@ public class Harvester extends ImasAgent {
     public GameSettings getGame() {
         return this.game;
     }
+    
+    /**
+     * Update the state.
+     *
+     * @param state current state of the agent.
+     */
+    public void setCurrentAgentState(String temp) {
+        this.state = temp;
+    }
 
+    /**
+     * Gets the current state of the agent.
+     *
+     * @return the current state of the agent.
+     */
+    public String getCurrentAgentState() {
+        return this.state;
+    }
+
+    /**
+     * Update the value of the Cell we want to go (to collect or to dump garbage).
+     *
+     * @param newGoalCell
+     */
+    public void setNewGoalCell(Cell temp) {
+        this.newGoalCell = temp;
+    }
+
+    /**
+     * Gets the value of the Cell we want to go (to collect or to dump garbage).
+     *
+     * @return the value of the Cell we want to go (to collect or to dump garbage).
+     */
+    public Cell getNewGoalCell() {
+        return this.newGoalCell;
+    }
+    
     /**
      * Builds the coordinator agent.
      */
@@ -96,8 +142,10 @@ public class Harvester extends ImasAgent {
         // searchAgent is a blocking method, so we will obtain always a correct AID
 
 
-        // Finite State Machine
+        // We set the current state of the Agent as FREE.
+        this.setCurrentAgentState(MessageContent.FREE);
         
+        // Finite State Machine
         FSMBehaviour fsm = new FSMBehaviour(this) {
             public int onEnd() {
                             System.out.println("(HarvesterAgent) FSM behaviour completed.");
@@ -107,8 +155,13 @@ public class Harvester extends ImasAgent {
         };
         
         fsm.registerFirstState(new WaitingForMapBehaviour(this), "STATE_1");
+        fsm.registerState(new InformStateAgentBehaviour(this), "STATE_2");
+        fsm.registerState(new WaitingForMapBehaviour(this), "STATE_3");
         
-        fsm.registerDefaultTransition("STATE_1", "STATE_1", new String[] {"STATE_1"});
+        fsm.registerDefaultTransition("STATE_1", "STATE_2");
+        fsm.registerTransition("STATE_2", "STATE_2", 0);
+        fsm.registerTransition("STATE_2", "STATE_3", 1, new String[] {"STATE_3"});
+        fsm.registerDefaultTransition("STATE_3", "STATE_2");
 
         this.addBehaviour(fsm);
         // setup finished. When we receive the last inform, the agent itself will add

@@ -20,10 +20,17 @@ package cat.urv.imas.agent;
 import static cat.urv.imas.agent.ImasAgent.OWNER;
 import cat.urv.imas.onthology.GameSettings;
 import cat.urv.imas.behaviour.scoutAgent.*;
+import cat.urv.imas.map.Cell;
+import cat.urv.imas.map.StreetCell;
+import cat.urv.imas.onthology.InfoAgent;
+import cat.urv.imas.onthology.InfoDiscovery;
 import jade.core.*;
 import jade.core.behaviours.FSMBehaviour;
 import jade.domain.*;
 import jade.domain.FIPAAgentManagement.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public class Scout extends ImasAgent {
 
@@ -34,7 +41,15 @@ public class Scout extends ImasAgent {
     /**
      * System agent id.
      */
-    private AID scoutCoordinator;
+    public AID scoutCoordinator;
+    /**
+     * Own InfoAgent.
+     */
+    public InfoAgent info;
+    /**
+     * InfoDiscovery. It contains all new discoveries of a turn.
+     */
+    public ArrayList<InfoDiscovery> newInfoDiscoveriesList;
     
     /**
      * Update the game settings.
@@ -53,6 +68,29 @@ public class Scout extends ImasAgent {
     public GameSettings getGame() {
         return this.game;
     }
+    
+    /**
+     * Gets the info for new discoveries in this turn.
+     *
+     * @return info ALL discoveries (is a list). It has to be an ArrayList because List is not serializable.
+     */
+    public ArrayList<InfoDiscovery> getNewInfoDiscoveriesList() {
+        return this.newInfoDiscoveriesList;
+    }
+    
+    /**
+     * Update value of the discoveries of this turn.
+     *
+     * @param newInfo information about new discoveries discovered in this turn.
+     */
+    public void setNewInfoDiscoveriesList(ArrayList<InfoDiscovery> newInfo) {
+        try {
+            this.newInfoDiscoveriesList.clear();
+        } catch (Exception e) {
+            
+        }
+        this.newInfoDiscoveriesList = newInfo;
+    }
 
     /**
      * Builds the coordinator agent.
@@ -60,6 +98,32 @@ public class Scout extends ImasAgent {
     public Scout() {
         super(AgentType.SCOUT);
     }
+    
+    /**
+     * Updates the InfoAgent of this scout.
+     */
+    public void updateInfoAgent() {
+        Map listOfAgents = this.getGame().getAgentList();
+        List<Cell> positions = (List<Cell>) listOfAgents.get(AgentType.SCOUT);
+        for (Cell c : positions)
+        {
+            StreetCell temp = (StreetCell) c;
+            if (temp.getAgent().getAID().equals(this.getAID())) 
+                this.info = temp.getAgent();
+        }
+    }
+    
+    /**
+     * Gets the current info of the agent.
+     *
+     * @return the last updated info of the agent in the current game.
+     */
+    public InfoAgent getInfoAgent() {
+        updateInfoAgent();
+        return this.info;
+    }
+    
+    
 
     /**
      * Agent setup method - called when it first come on-line. Configuration of
@@ -106,8 +170,14 @@ public class Scout extends ImasAgent {
         };
         
         fsm.registerFirstState(new WaitingForMapBehaviour(this), "STATE_1");
+        fsm.registerState(new ExploreSurroundingCellsBehaviour(this), "STATE_2");
+        fsm.registerState(new SendingNewDiscoveriesBehaviour(this), "STATE_3");
+        fsm.registerState(new WaitingForMapBehaviour(this), "STATE_4");
         
-        fsm.registerDefaultTransition("STATE_1", "STATE_1", new String[] {"STATE_1"});
+        fsm.registerDefaultTransition("STATE_1", "STATE_2");
+        fsm.registerDefaultTransition("STATE_2", "STATE_3");
+        fsm.registerDefaultTransition("STATE_3", "STATE_4", new String[] {"STATE_4"});
+        fsm.registerDefaultTransition("STATE_4", "STATE_2");
         
         this.addBehaviour(fsm);
         // setup finished. When we receive the last inform, the agent itself will add

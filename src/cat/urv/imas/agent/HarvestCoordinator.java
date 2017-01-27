@@ -225,16 +225,18 @@ public class HarvestCoordinator extends ImasAgent {
         fsm.registerFirstState(new WaitingForMapBehaviour(this), "STATE_1");
         fsm.registerState(new SendingMapBehaviour(this), "STATE_2");
         fsm.registerState(new WaitingForNewDiscoveriesBehaviour(this), "STATE_3");
-        fsm.registerState(new GenerateNewPositionsBehaviour(this), "STATE_4");
-        fsm.registerState(new SendingNewPositionsBehaviour(this), "STATE_5");
-        fsm.registerFirstState(new WaitingForMapBehaviour(this), "STATE_6");
+        fsm.registerState(new WaitingAgentsStateBehaviour(this), "STATE_4");
+        fsm.registerState(new GenerateNewPositionsBehaviour(this), "STATE_5");
+        fsm.registerState(new SendingNewPositionsBehaviour(this), "STATE_6");
+        fsm.registerFirstState(new WaitingForMapBehaviour(this), "STATE_7");
         
         fsm.registerDefaultTransition("STATE_1", "STATE_2");
         fsm.registerDefaultTransition("STATE_2", "STATE_3");
         fsm.registerDefaultTransition("STATE_3", "STATE_4");
         fsm.registerDefaultTransition("STATE_4", "STATE_5");
-        fsm.registerDefaultTransition("STATE_5", "STATE_6", new String[] {"STATE_6"});
-        fsm.registerDefaultTransition("STATE_6", "STATE_2");
+        fsm.registerDefaultTransition("STATE_5", "STATE_6");
+        fsm.registerDefaultTransition("STATE_6", "STATE_7", new String[] {"STATE_7"});
+        fsm.registerDefaultTransition("STATE_7", "STATE_2");
         
         this.addBehaviour(fsm);
 
