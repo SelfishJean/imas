@@ -73,16 +73,23 @@ public class ExploreSurroundingCellsBehaviour extends SimpleBehaviour
                     
                     BuildingCell cell = (BuildingCell) mapa[i][j]; 
                     Map<GarbageType,Integer> garbage;
-                    garbage = cell.detectGarbage();
                     
-                    if (!garbage.isEmpty())
+                    if (cell.getFound() == false) // Only if the garbage has not been discovered before.
                     {
-                        oneDiscovery.setRow(i);
-                        oneDiscovery.setColumn(j);
-                        oneDiscovery.setGarbage(garbage);
-                        newDiscoveries.add(oneDiscovery);
-                        //System.out.println("*_*_*_*_*_*_*_*_*_*_*_*_*_*"+garbage);
-                    }                    
+                        garbage = cell.detectGarbage(); // If there is garbage, this method sets found=true.
+                        //cell.setFound(true);
+                        
+                        if (!garbage.isEmpty())
+                        {
+                            oneDiscovery.setRow(i);
+                            oneDiscovery.setColumn(j);
+                            oneDiscovery.setGarbage(garbage);
+                            newDiscoveries.add(oneDiscovery);
+                            //System.out.println("*_*_*_*_*_*_*_*_*_*_*_*_*_*"+garbage+" "+i+" "+j);
+                        }   
+                    }
+                    //else
+                        //System.out.println("-..-..-.-.-..-...-.--..-.-ThisBuildingHasAlreadyBeenFound.....");
                 }
             }
         }
