@@ -33,4 +33,39 @@ public class MessageContent {
      * step has been initiated.
      */
     public static final String NEXT_STEP = "Next step";
+    
+    /**
+     * Message sent from Harvester agent to Harvester Coordinator to inform about its
+     * state.
+     */
+    public static final String FREE = "Agent is free";
+    
+    /**
+     * Message sent from Harvester agent to Harvester Coordinator to inform about its
+     * state.
+     */
+    public static final String MOVING = "Agent is moving";
+    
+    /**
+     * Message sent from Harvester agent to Harvester Coordinator to inform about its
+     * state.
+     */
+    public static final String COLLECTING = "Agent is collecting";
+    
+    /**
+     * Message sent from Harvester agent to Harvester Coordinator to inform about its
+     * state.
+     */
+    public static final String DUMPING = "Agent is dumping";
+    
+    /**
+     * Message sent from Harvester Coordinator to Harvester agent as an Inform.
+     */
+    public static final String OK = "OK";
+    
+    /**
+     * Message sent from Harvester Coordinator to Harvester agent as an Inform.
+     */
+    public static final String NO_GOAL = "No goal";
+    
 }
