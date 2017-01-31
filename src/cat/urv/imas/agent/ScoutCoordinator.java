@@ -133,12 +133,21 @@ public class ScoutCoordinator extends ImasAgent {
      */
     public void addNewInfoDiscoveriesList(ArrayList<InfoDiscovery> newInfo) {
         try { 
-            if (!this.newInfoDiscoveriesList.isEmpty()) // Even though we have initialized it in the previous step, it could be empty (No discoveries for previous scout)
-                this.newInfoDiscoveriesList.addAll(newInfo);                
+            boolean condition;
+            condition = this.newInfoDiscoveriesList.isEmpty();
+            //System.out.println("SC_______________________"+this.newInfoDiscoveriesList.size());
+            if (!condition) { // Even though we have initialized it in the previous step, it could be empty (No discoveries for previous scout)
+                this.newInfoDiscoveriesList.addAll(newInfo); 
+                //System.out.println("SC_______________________"+this.newInfoDiscoveriesList.size());
+            }
+            else
+            {
+                this.newInfoDiscoveriesList = newInfo;
+                //System.out.println("SC_________________________ EMPTY DISCOVERIES");
+            }
         }catch (Exception e) {
             
         }
-        this.newInfoDiscoveriesList = newInfo;
     }
     
     /**

@@ -21,6 +21,7 @@ import cat.urv.imas.onthology.GameSettings;
 import cat.urv.imas.behaviour.coordinator.*;
 import cat.urv.imas.onthology.InfoAgent;
 import cat.urv.imas.onthology.InfoDiscovery;
+import cat.urv.imas.onthology.InfoMapChanges;
 import cat.urv.imas.onthology.MessageContent;
 import jade.core.*;
 import jade.core.behaviours.*;
@@ -63,6 +64,11 @@ public class CoordinatorAgent extends ImasAgent {
      */
     public ArrayList<InfoDiscovery> newInfoDiscoveriesList;
     /**
+     * InfoMapChanges. It contains all new changes we did in this turn over the map
+     * which have to be updated by SystemAgent.
+     */
+    public InfoMapChanges newChangesOnMap;
+    /**
      * isMapUpdated. If the map has been already updated, then we can send the new positions
      * (we need it because we need to know the new map to modify the previous position
      * of our agents in the newInfoAgent variable in order to delete the agents correctly).
@@ -103,6 +109,21 @@ public class CoordinatorAgent extends ImasAgent {
             
         }
         this.newInfoDiscoveriesList = newInfo;
+        
+        try { 
+            boolean condition;
+            condition = this.newInfoDiscoveriesList.isEmpty();
+            //System.out.println("CA_______________________BeforeIf"+this.newInfoDiscoveriesList.size());
+            if (!condition) { // Even though we have initialized it in the previous step, it could be empty (No discoveries for previous scout)
+                //System.out.println("CA_______________________"+this.newInfoDiscoveriesList.size());
+            }
+            else
+            {
+                //System.out.println("CA_________________________EMPTY DISCOVERIES");
+            }
+        }catch (Exception e) {
+            
+        }
     }
     
     /**
@@ -209,8 +230,10 @@ public class CoordinatorAgent extends ImasAgent {
         fsm.registerState(new WaitingForNewDiscoveriesBehaviour(this), "STATE_3");
         fsm.registerState(new SendingNewDiscoveriesBehaviour(this), "STATE_4");
         fsm.registerState(new WaitingForNewPositionsBehaviour(this), "STATE_5");
-        fsm.registerState(new AskingForNewSimulationStepBehaviour(this), "STATE_6");
-        fsm.registerState(new AskingForMapBehaviour(this), "STATE_7");
+        fsm.registerState(new WaitingForNewCollectedGarbageBehaviour(this), "STATE_6");
+        fsm.registerState(new SendingNewChangesOnMapBehaviour(this), "STATE_7");
+        fsm.registerState(new AskingForNewSimulationStepBehaviour(this), "STATE_8");
+        fsm.registerState(new AskingForMapBehaviour(this), "STATE_9");
         
         //fsm.registerState(new AuxiliarSimpleBehaviour(this), "STATE_3");
         
@@ -223,8 +246,10 @@ public class CoordinatorAgent extends ImasAgent {
         fsm.registerDefaultTransition("STATE_3", "STATE_4");
         fsm.registerDefaultTransition("STATE_4", "STATE_5");
         fsm.registerDefaultTransition("STATE_5", "STATE_6");
-        fsm.registerDefaultTransition("STATE_6", "STATE_7", new String[] {"STATE_7"});
-        fsm.registerDefaultTransition("STATE_7", "STATE_2");
+        fsm.registerDefaultTransition("STATE_6", "STATE_7");
+        fsm.registerDefaultTransition("STATE_7", "STATE_8");
+        fsm.registerDefaultTransition("STATE_8", "STATE_9", new String[] {"STATE_9"});
+        fsm.registerDefaultTransition("STATE_9", "STATE_2");
         //fsm.registerDefaultTransition("STATE_3", "STATE_1");
         //fsm.registerDefaultTransition("STATE_3", "STATE_2");
         //fsm.registerDefaultTransition("STATE_4", "STATE_2");
@@ -276,6 +301,24 @@ public class CoordinatorAgent extends ImasAgent {
      */
     public void addNewInfoAgent(ArrayList<InfoAgent> newInfo) {
         this.newInfoAgent.addAll(newInfo);
+    }
+    
+    /**
+     * Update the NewChangesOnMap.
+     *
+     * @param temp current new changes we did this turn.
+     */
+    public void setNewChangesOnMap(InfoMapChanges temp) {
+        this.newChangesOnMap = temp;
+    }
+
+    /**
+     * Gets the current NewChangesOnMap.
+     *
+     * @return the current game settings.
+     */
+    public InfoMapChanges getNewChangesOnMap() {
+        return this.newChangesOnMap;
     }
 
 }

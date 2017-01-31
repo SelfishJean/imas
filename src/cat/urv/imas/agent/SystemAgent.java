@@ -27,6 +27,7 @@ import cat.urv.imas.map.Cell;
 import cat.urv.imas.map.StreetCell;
 import cat.urv.imas.onthology.GarbageType;
 import cat.urv.imas.onthology.InfoAgent;
+import cat.urv.imas.onthology.InfoMapChanges;
 import static cat.urv.imas.onthology.InitialGameSettings.H;
 import static cat.urv.imas.onthology.InitialGameSettings.R;
 import static cat.urv.imas.onthology.InitialGameSettings.S;
@@ -83,6 +84,11 @@ public class SystemAgent extends ImasAgent {
      * SentMap. It is true when the Coordinator agent has already received the new map.
      */
     public boolean sentMap = false;
+    /**
+     * InfoMapChanges. It contains all new changes we did in this turn over the map
+     * which have to be updated by SystemAgent.
+     */
+    public InfoMapChanges newChangesOnMap;
     
 
     /**
@@ -184,6 +190,24 @@ public class SystemAgent extends ImasAgent {
             
         }
         this.newInfoAgent = newInfo;
+    }
+    
+    /**
+     * Update the NewChangesOnMap.
+     *
+     * @param temp current new changes we did this turn.
+     */
+    public void setNewChangesOnMap(InfoMapChanges temp) {
+        this.newChangesOnMap = temp;
+    }
+
+    /**
+     * Gets the current NewChangesOnMap.
+     *
+     * @return the current game settings.
+     */
+    public InfoMapChanges getNewChangesOnMap() {
+        return this.newChangesOnMap;
     }
     
     /**
@@ -312,14 +336,16 @@ public class SystemAgent extends ImasAgent {
         //fsm.registerState(new UpdateMapResponseBehaviour(this), "STATE_2");
         //fsm.registerState(new UpdateSimulationBehaviour(this), "STATE_3");
         //fsm.registerState(new AuxiliarSimpleBehaviour(this), "STATE_2");
-        fsm.registerState(new RequestForNewSimulationStepBehaviour(this), "STATE_2");
-        fsm.registerState(new RequestResponseBehaviour(this), "STATE_3");
+        fsm.registerState(new WaitingNewChangesOnMapBehaviour(this), "STATE_2");
+        fsm.registerState(new RequestForNewSimulationStepBehaviour(this), "STATE_3");
+        fsm.registerState(new RequestResponseBehaviour(this), "STATE_4");
         
         
         fsm.registerDefaultTransition("STATE_1", "STATE_2");
         //fsm.registerDefaultTransition("STATE_2", "STATE_1", new String[] {"STATE_1"});
         fsm.registerDefaultTransition("STATE_2", "STATE_3", new String[] {"STATE_3"});
-        fsm.registerDefaultTransition("STATE_3", "STATE_2", new String[] {"STATE_2"});
+        fsm.registerDefaultTransition("STATE_3", "STATE_4", new String[] {"STATE_4"});
+        fsm.registerDefaultTransition("STATE_4", "STATE_2", new String[] {"STATE_2"});
         
         //fsm.registerDefaultTransition("STATE_2", "STATE_3");
         //fsm.registerDefaultTransition("STATE_3", "STATE_1");

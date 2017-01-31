@@ -29,16 +29,6 @@ import jade.domain.*;
 import jade.domain.FIPAAgentManagement.*;
 import java.util.ArrayList;
 
-import java.util.List;
-import cat.urv.imas.map.AStar;
-import cat.urv.imas.map.CellType;
-import cat.urv.imas.map.StreetCell;
-import cat.urv.imas.map.BuildingCell;
-import cat.urv.imas.onthology.GarbageType;
-import cat.urv.imas.onthology.InfoAgent;
-import cat.urv.imas.map.RecyclingCenterCell;
-import java.util.Map;
-
 public class Harvester extends ImasAgent {
 
     /**
@@ -134,11 +124,6 @@ public class Harvester extends ImasAgent {
         this.newInfoAgent = newInfo;
     }
     
-    
-    private List<Cell> path;
-    Map<GarbageType, Integer> curGarbage;
-    int capacity;
-    
     /**
      * Builds the coordinator agent.
      */
@@ -200,10 +185,13 @@ public class Harvester extends ImasAgent {
         fsm.registerState(new CollectingBehaviour(this), "STATE_5");
         fsm.registerState(new DumpingBehaviour(this), "STATE_6");
         fsm.registerState(new ChillingBehaviour(this), "STATE_7");
-        fsm.registerState(new SendingNewPositionBehaviour(this), "STATE_8");
-        //fsm.registerState(new GenerateNewPositionsBehaviour(this), "STATE_8"); // Comment when we do not need simulate position generation.
-        //fsm.registerState(new SendingNewPositionBehaviour(this), "STATE_9"); // Comment when we do not need simulate position generation.
-        fsm.registerState(new WaitingForMapBehaviour(this), "STATE_9");
+        //fsm.registerState(new SendingNewPositionBehaviour(this), "STATE_8");
+        fsm.registerState(new GenerateNewPositionsBehaviour(this), "STATE_8"); // Comment when we do not need simulate position generation.
+        fsm.registerState(new SendingNewPositionBehaviour(this), "STATE_9"); // Comment when we do not need simulate position generation.
+        fsm.registerState(new WaitingForMapBehaviour(this), "STATE_10");
+        
+        
+        
         
         fsm.registerDefaultTransition("STATE_1", "STATE_2");
         fsm.registerTransition("STATE_2", "STATE_2", 0);
@@ -217,241 +205,13 @@ public class Harvester extends ImasAgent {
         fsm.registerDefaultTransition("STATE_6", "STATE_8");
         fsm.registerTransition("STATE_2", "STATE_7", 5);
         fsm.registerDefaultTransition("STATE_7", "STATE_8");
-        //fsm.registerDefaultTransition("STATE_8", "STATE_9"); // Comment when we do not need simulate position generation.
-        fsm.registerTransition("STATE_8", "STATE_8", 0);
-        fsm.registerTransition("STATE_8", "STATE_9", 1, new String[] {"STATE_9"});
-        fsm.registerDefaultTransition("STATE_9", "STATE_2");
+        fsm.registerDefaultTransition("STATE_8", "STATE_9"); // Comment when we do not need simulate position generation.
+        fsm.registerTransition("STATE_9", "STATE_9", 0);
+        fsm.registerTransition("STATE_9", "STATE_10", 1, new String[] {"STATE_10"});
+        fsm.registerDefaultTransition("STATE_10", "STATE_2");
 
         this.addBehaviour(fsm);
         // setup finished. When we receive the last inform, the agent itself will add
         // a behaviour to send/receive actions
-    }
-    
-    public Cell getCurrentCell()
-    {
-        Map<AgentType, List<Cell>> agents = game.getAgentList();
-        List<Cell> harvestersCells = agents.get(AgentType.HARVESTER);
-
-        for(int i = 0; i < harvestersCells.size(); ++i)
-        {
-            StreetCell temp = (StreetCell) harvestersCells.get(i);
-            
-            if(temp.getAgent() != null && temp.getAgent().getAID().equals(this.getAID()))
-            {
-                return harvestersCells.get(i);
-            }
-        }
-        
-        System.out.print("Harvester error (getCurrentCell): null cell");
-        return null;
-    }
-    
-    
-    public void calculatePath(Cell cur, Cell goal)
-    {
-        AStar l = new AStar(cur, goal, game.getMap());
-        path = l.getPath();
-        
-        if(path != null && path.size() > 0)
-        {
-            this.log("The path is created");
-            
-            for(int i = 0; i < path.size(); ++i)
-            {
-                System.out.printf("(%d,%d)", path.get(i).getRow(), path.get(i).getCol());
-            }
-        }
-        else
-        {
-            this.log("Error: the path isn't created");
-            System.out.printf("CurrentCell: %d %d; CurrentGoal: %d %d \n", cur.getRow(), 
-                    cur.getCol(), goal.getRow(), goal.getCol());
-        }
-        
-        this.removeNextMove();
-    }
-    
-    public List<Cell> getPath()
-    {
-        return path;
-    }
-    
-    public Cell getNextMove()
-    {
-        Cell res = null;
-        if(path.size() > 0)
-        {
-            res = path.get(0);
-        }
-        
-        return res;
-    }
-    
-    public void removeNextMove()
-    {
-        if(path.size() > 0)
-        {
-            path.remove(0);
-        }
-    }
-    
-    public void collectGarbage()
-    {
-        Cell[][] map = game.getMap();
-        Cell curCell = getCurrentCell();
-        
-        BuildingCell building = null;
-        System.out.printf("CollectingGarbage: %d %d\n", curCell.getRow(), curCell.getCol());
-        if(map[curCell.getRow() - 1][curCell.getCol()].getCellType() == CellType.BUILDING)
-        {
-            building = (BuildingCell) map[curCell.getRow() - 1][curCell.getCol()];
-        }
-        else if(map[curCell.getRow() + 1][curCell.getCol()].getCellType() == CellType.BUILDING)
-        {
-            building = (BuildingCell) map[curCell.getRow() + 1][curCell.getCol()];
-        }
-        else if(map[curCell.getRow()][curCell.getCol() - 1].getCellType() == CellType.BUILDING)
-        {
-            building = (BuildingCell) map[curCell.getRow()][curCell.getCol() - 1];
-        }
-        else if(map[curCell.getRow()][curCell.getCol() + 1].getCellType() == CellType.BUILDING)
-        {
-            building = (BuildingCell) map[curCell.getRow()][curCell.getCol() + 1];
-        }
-    
-        curGarbage = building.getGarbage();
-        for (Map.Entry<GarbageType, Integer> entry : curGarbage.entrySet()) 
-        {
-            curGarbage.replace(entry.getKey(), 0);
-        }
-        
-        for(int i = 0; i < capacity; ++i)
-        {
-            if(building.getGarbage().isEmpty() == false)
-            {
-                for (Map.Entry<GarbageType, Integer> entry : curGarbage.entrySet()) 
-                {
-                    curGarbage.replace(entry.getKey(), entry.getValue() + 1);
-                }
-                
-                building.removeGarbage();
-            }
-            else
-            {
-                break;
-            }
-        }
-    }
-    
-    public Cell getRecyclingCell(Cell harvester, Cell building)
-    {
-        Cell[][] map = game.getMap();
-        if(harvester.getRow() > building.getRow() 
-                && map[building.getRow() + 1][building.getCol()].getCellType() == CellType.STREET)
-        {
-            return map[building.getRow() + 1][building.getCol()];
-        }
-        else if((harvester.getRow() <= building.getRow() 
-                && map[building.getRow() - 1][building.getCol()].getCellType() == CellType.STREET))
-        {
-            return map[building.getRow() - 1][building.getCol()];
-        }
-        else if((harvester.getCol() <= building.getCol() 
-                && map[building.getRow()][building.getCol() - 1].getCellType() == CellType.STREET))
-        {
-            return map[building.getRow()][building.getCol() - 1];
-        }
-        else 
-        {
-            return map[building.getRow()][building.getCol() + 1];
-        }
-    }
-    
-    // this method assigns new goal for recycling center
-    public void findRCenter()
-    {      
-        Cell curPos = getCurrentCell();
-        Cell[][] map = game.getMap();
-        int rows = map.length;
-        int cols = map[0].length;
-
-        double minDist = 10000;
-        Cell building = null;
-        for(int i = 0; i < rows; ++i)
-        {
-            for(int j = 0; j < cols; ++j)
-            {
-                if(map[i][j].getCellType() == CellType.RECYCLING_CENTER)
-                {
-                    Cell temp = map[i][j];
-                    double tempDist = (curPos.getRow() - temp.getRow()) + (curPos.getCol() - temp.getCol());
-
-                    if (tempDist < minDist) 
-                    {
-                        minDist = tempDist;
-                        building = temp;
-                    }
-                }
-            }
-        }
-        
-        this.setNewGoalCell(this.getRecyclingCell(curPos, building));
-    }
-    
-    
-    public void dumpGarbage()
-    {
-        Cell[][] map = game.getMap();
-        Cell curCell = getCurrentCell();
-        
-        RecyclingCenterCell building;
-        if(map[curCell.getRow() - 1][curCell.getCol()].getCellType() == CellType.RECYCLING_CENTER)
-        {
-            building = (RecyclingCenterCell) map[curCell.getRow() - 1][curCell.getCol()];
-        }
-        else if(map[curCell.getRow() + 1][curCell.getCol()].getCellType() == CellType.RECYCLING_CENTER)
-        {
-            building = (RecyclingCenterCell) map[curCell.getRow() + 1][curCell.getCol()];
-        }
-        else if(map[curCell.getRow()][curCell.getCol() - 1].getCellType() == CellType.RECYCLING_CENTER)
-        {
-            building = (RecyclingCenterCell) map[curCell.getRow()][curCell.getCol() - 1];
-        }
-        else
-        {
-            building = (RecyclingCenterCell) map[curCell.getRow()][curCell.getCol() + 1];
-        }
-    
-        int[] prices = building.getPrices();
-        double score = 0;
-        for (Map.Entry<GarbageType, Integer> entry : curGarbage.entrySet()) 
-        {
-            GarbageType type = entry.getKey();
-            if(type == GarbageType.PLASTIC)
-            {
-                score += (prices[0] * entry.getValue());
-            }
-            else if(type == GarbageType.GLASS)
-            {
-                score += (prices[1] * entry.getValue());
-            }
-            else
-            {
-                score += (prices[2] * entry.getValue());
-            }
-        }
-        
-        curGarbage.clear();
-        // WHERE DO I NEED TO ADD THE SCORE
-    }
-    
-    public boolean hasGarbage()
-    {
-        if(curGarbage == null)
-        {
-            return false;
-        }
-       
-        return !curGarbage.isEmpty();
     }
 }
