@@ -26,11 +26,12 @@ import jade.core.Agent;
 public class WaitingForNewDiscoveriesBehaviour extends SimpleBehaviour
 {
     private ACLMessage msg;
-    boolean hasReply;
+    boolean hasReply, first;
     
     public WaitingForNewDiscoveriesBehaviour(Agent a) 
     {
         super(a);
+        first = true;
     }
     
     @Override
@@ -49,10 +50,6 @@ public class WaitingForNewDiscoveriesBehaviour extends SimpleBehaviour
 
             if(response != null) 
             {
-                //System.out.println("Waiting...."+response);
-                //System.out.println(response.getPerformative());
-                //CoordinatorAgent agent = (CoordinatorAgent) myAgent;
-                //CoordinatorAgent agent = (CoordinatorAgent) this.getAgent();
                 switch(response.getPerformative()) 
                 {
                     case ACLMessage.INFORM:
@@ -61,7 +58,21 @@ public class WaitingForNewDiscoveriesBehaviour extends SimpleBehaviour
                         try 
                         {
                             ArrayList<InfoDiscovery> newDiscoveries = (ArrayList<InfoDiscovery>) response.getContentObject();
-                            agent.setNewInfoDiscoveriesList(newDiscoveries);
+                            
+                            /*try {
+                                System.out.println("HC*_*_*_*_*_*_*_*_*_*_*_*_*_*"+newDiscoveries.iterator().next().getGarbage()+newDiscoveries.iterator().next().getRow()+newDiscoveries.iterator().next().getColumn());
+                            } catch (Exception e){
+                                
+                            }*/
+                            
+                            if (first) // We first initialize the list of newDiscoveries using set method.
+                            {
+                                first = false;
+                                agent.setNewInfoDiscoveriesList(newDiscoveries);
+                            }
+                            else // Once it is initialized we can just add new discoveries.
+                                agent.addNewInfoDiscoveriesList(newDiscoveries);
+                              
                             agent.log("New discoveries saved");
                             
                             //ACLMessage reply = response.createReply(); 
@@ -82,6 +93,10 @@ public class WaitingForNewDiscoveriesBehaviour extends SimpleBehaviour
                         break;
                     default:
                         agent.log("Failed to process the message");
+                        ACLMessage reply = response.createReply(); 
+                        // Sending a Failure
+                        reply.setPerformative(ACLMessage.FAILURE);
+                        agent.send(reply);
                         break;
                 }
 

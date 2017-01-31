@@ -104,7 +104,7 @@ public class GenerateNewPositionsBehaviour extends SimpleBehaviour {
             }
         }
         }
-        agent.setNewInfoAgent(newPositions);
+        //agent.setNewInfoAgent(newPositions);
     }
     
     @Override

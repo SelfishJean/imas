@@ -27,9 +27,12 @@ import jade.lang.acl.MessageTemplate;
 import jade.proto.AchieveREResponder;
 import cat.urv.imas.agent.SystemAgent;
 import cat.urv.imas.map.Cell;
+import cat.urv.imas.map.CellType;
 import cat.urv.imas.map.StreetCell;
 import cat.urv.imas.onthology.GameSettings;
 import cat.urv.imas.onthology.InfoAgent;
+import cat.urv.imas.onthology.InfoDiscovery;
+import cat.urv.imas.onthology.InfoMapChanges;
 import cat.urv.imas.onthology.MessageContent;
 import jade.core.AID;
 import java.util.List;
@@ -52,10 +55,14 @@ public class WaitingAgentsStateBehaviour extends SimpleBehaviour
     public WaitingAgentsStateBehaviour(Agent agent) 
     {
         super(agent);
+        
+        HarvestCoordinator a = (HarvestCoordinator) this.getAgent();
         hasReply = false;
         first = true;
         allHarvesters = new ArrayList<InfoAgent>();
         count = 0;
+        a.initializeOngoingGoals();
+        
         //agent.log("Waiting REQUESTs of the map from authorized agents");
         System.out.println("(HarvesterCoordinator) Waiting REQUESTs sending states from authorized agents");
     }
@@ -65,12 +72,11 @@ public class WaitingAgentsStateBehaviour extends SimpleBehaviour
     { 
         HarvestCoordinator agent = (HarvestCoordinator) this.getAgent();
         agent.log("Starting WaitingAgentsStateBehaviour");
+        agent.initializeCellsCollectedGarbage();
         //boolean communicationOK = false;
         
         if (first)
         {
-            // Scouts list initialization
-            //agent.initHarvesters(); 
             first = false;
             allHarvesters = agent.getListHarvesters();
         }
@@ -79,70 +85,120 @@ public class WaitingAgentsStateBehaviour extends SimpleBehaviour
         {
             ACLMessage response = myAgent.receive();
             //System.out.println(response.getPerformative());
-            if(response != null && response.getPerformative() == ACLMessage.REQUEST) 
+            if(response != null) 
             {
-                hasReply = true;
-                ACLMessage reply = response.createReply();
-                try 
+                switch(response.getPerformative())
                 {
-                    Object content = (Object) response.getContent();
-                    
-                    agent.log("Request received from " + ((AID) response.getSender()).getLocalName());
-                    // Sending an Agree..
-                    reply.setPerformative(ACLMessage.AGREE);
-                    agent.log("Sending Agreement");
-                    agent.send(reply);
-
-                    // Sending an Inform..
-                    ACLMessage reply2 = response.createReply();
-                    reply2.setPerformative(ACLMessage.INFORM);
-                    try 
-                    {
-                        switch (content.toString())
+                    case ACLMessage.REQUEST:
+                        hasReply = true;
+                        ACLMessage reply = response.createReply();
+                        try 
                         {
-                            case MessageContent.FREE:
-                                agent.log(content.toString());
-                                /* HERE WE HAVE TWO OPTIONS: THERE ARE GOALS OR NOT.
+                            Object content = (Object) response.getContent();
 
-                                IF THERE ARE GOALS...RUN A FUNCTION TO CHOOSE ONE AND SEND A CELL AS AN OBJECT
-                                    reply2.setContentObject(CELL WHIT GARBAGE);
-                                IF THERE ARE NOT GOALS...SEND A MESSAGE INFORMING ABOUT IT
-                                    reply2.setContent(MessageContent.NO_GOAL);
-                                
-                                For the time being, in order to keep it as simple as possible, we 
-                                are going to use just NO_GOAL and we will choose randomly in the other side 
-                                to run StartingGoalBehaviour or ChillingBehaviour.
-                                */
-                                reply2.setContent(MessageContent.NO_GOAL);
-                                break;
-                            case MessageContent.MOVING:
-                                agent.log(content.toString());
-                                reply2.setContent(MessageContent.OK);
-                                break;
-                            case MessageContent.COLLECTING:
-                                agent.log(content.toString());
-                                reply2.setContent(MessageContent.OK);
-                                break;
-                            case MessageContent.DUMPING:
-                                agent.log(content.toString());
-                                reply2.setContent(MessageContent.OK);
-                                break;
-                        }
-                    count++;
-                    } catch (Exception e) {
-                            reply2.setPerformative(ACLMessage.FAILURE);
-                            System.err.println(e.toString());
+                            agent.log("Request received from " + ((AID) response.getSender()).getLocalName());
+                            // Sending an Agree..
+                            reply.setPerformative(ACLMessage.AGREE);
+                            agent.log("Sending Agreement");
+                            agent.send(reply);
+
+                            // Sending an Inform..
+                            ACLMessage reply2 = response.createReply();
+                            reply2.setPerformative(ACLMessage.INFORM);
+                            try 
+                            {
+                                switch (content.toString())
+                                {
+                                    case MessageContent.FREE:
+                                        agent.log(content.toString());
+
+                                        try { 
+                                            boolean condition;
+                                            condition = agent.newInfoDiscoveriesList.isEmpty();
+                                            AID sender;
+                                            sender = (AID) response.getSender();
+                                            if (!condition) { 
+                                                System.out.println("_________________________________WaitingAgentsState   DiscoveriesListSizeBeforeRemoving"+agent.newInfoDiscoveriesList.size());
+                                                Cell c;
+                                                
+                                                InfoDiscovery info = agent.newInfoDiscoveriesList.get(0);
+                                                agent.newInfoDiscoveriesList.remove(0); //This causes a problem, if we delete the goal if we find it again we will take it into account again.
+                                                System.out.println("_________________________________WaitingAgentsState   DiscoveriesListSize"+agent.newInfoDiscoveriesList.size());
+                                                
+                                                c = agent.game.getMap()[info.getRow()][info.getColumn()];
+                                                
+                                                Map<AID, Cell> currentGoals = agent.getOngoingGoals();
+                                                if (!currentGoals.containsKey(sender))
+                                                {
+                                                    agent.addOngoingGoals(sender, c); // it is already initialized in constructor.
+                                                }
+                                                else
+                                                {
+                                                    System.out.println("_________________________________WaitingAgentsState   Sender has already a goal"+sender.getLocalName());
+                                                }
+                                                
+                                                
+                                                reply2.setContentObject(c);
+                                                //System.out.println("WaitingStates_______________________THERE ARE DISCOVERIES"+agent.newInfoDiscoveriesList.size());
+                                            }
+                                            else
+                                            {
+                                                reply2.setContent(MessageContent.NO_GOAL);
+                                                System.out.println("WaitingStates_________________________EMPTY DISCOVERIES");
+                                            }
+
+                                            // The following part should be in the case MessageContent.COLLECTING:
+                                            Map<AID, Cell> currentGoals = agent.getOngoingGoals();
+                                            if (currentGoals.containsKey(sender))
+                                            {
+                                                System.out.println("_________________________________WaitingAgentsState   Cell"+currentGoals.get(sender));
+                                                agent.addCellsCollectedGarbage(currentGoals.get(sender)); // already initialized (beginning action method)
+                                            }
+                                            
+                                        }catch (Exception e) {
+
+                                        }
+                                        break;
+                                    case MessageContent.MOVING:
+                                        agent.log(content.toString());
+                                        reply2.setContent(MessageContent.OK);
+                                        break;
+                                    case MessageContent.COLLECTING:
+                                        agent.log(content.toString());
+                                        reply2.setContent(MessageContent.OK);
+                                        break;
+                                    case MessageContent.DUMPING:
+                                        agent.log(content.toString());
+                                        reply2.setContent(MessageContent.OK);
+                                        break;
+                                }
+                            count++;
+                            } catch (Exception e) {
+                                    reply2.setPerformative(ACLMessage.FAILURE);
+                                    System.err.println(e.toString());
+                                    e.printStackTrace();
+                            }
+                            agent.log("Sending Inform");
+                            agent.send(reply2);
+                        } 
+                        catch (Exception e) 
+                        {
+                            reply.setPerformative(ACLMessage.FAILURE);
+                            agent.errorLog(e.getMessage());
                             e.printStackTrace();
-                    }
-                    agent.log("Sending Inform");
-                    agent.send(reply2);
-                } 
-                catch (Exception e) 
-                {
-                    reply.setPerformative(ACLMessage.FAILURE);
-                    agent.errorLog(e.getMessage());
-                    e.printStackTrace();
+                        }
+                        break;
+                        
+                    default:
+                        agent.log("Failed to process the message");
+                        ACLMessage reply2 = response.createReply(); 
+                        // Sending a Failure
+                        reply2.setPerformative(ACLMessage.FAILURE);
+                        agent.send(reply2);
+                        break;
+                    
                 }
+                    
                 //agent.log("Response being prepared");
                 //agent.send(reply);
                 
