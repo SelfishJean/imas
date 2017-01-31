@@ -38,6 +38,8 @@ import cat.urv.imas.onthology.InfoAgent;
 import java.util.ArrayList;
 import cat.urv.imas.map.SettableBuildingCell;
 import cat.urv.imas.onthology.GarbageType;
+import cat.urv.imas.onthology.InfoDiscovery;
+import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -87,6 +89,8 @@ public class RequestForNewSimulationStepBehaviour extends SimpleBehaviour
                     reply2.setPerformative(ACLMessage.INFORM);
 
                     try {
+                        makeChanges();
+                        agent.log("Changes done");
                         spawnGarbage();
                         agent.log("Garbage spread");
                         moveAgents();
@@ -114,6 +118,64 @@ public class RequestForNewSimulationStepBehaviour extends SimpleBehaviour
         }
     }
 
+    public void makeChanges()
+    {
+        try 
+        { 
+            SystemAgent agent = (SystemAgent)this.getAgent();
+            Cell [][] mapa;
+            GameSettings game;
+            game = agent.getGame();
+            mapa = game.getMap();
+            ArrayList<Cell> newCollectedG, newFoundG;
+            boolean condition;
+            
+            newCollectedG = agent.newChangesOnMap.getCollectedGarbage();
+            newFoundG = agent.newChangesOnMap.getFoundGarbage();
+            
+            // We delete set the garbage as found.
+            condition = newFoundG.isEmpty();
+            if (!condition) { 
+                for (int i=0; i<newFoundG.size(); i++)
+                {
+                    Cell c = newFoundG.get(i);
+                    System.out.println("............FoundGarbage..........."+c);
+                    
+                    if(mapa[c.getRow()][c.getCol()] instanceof SettableBuildingCell)
+                    {
+                        ((BuildingCell) mapa[c.getRow()][c.getCol()]).setFound(true);
+                    }
+                }
+            }
+            else
+            {
+                System.out.println("............NOOO...FoundGarbage...........");
+            }
+            
+            // We delete units of garbage if is being collected.
+            condition = newCollectedG.isEmpty();
+            if (!condition) { 
+                
+                for (int i=0; i<newCollectedG.size(); i++)
+                {
+                    Cell c = newCollectedG.get(i);
+                    System.out.println("............DeletingOneUnitOfGarbage..........."+c);
+                    
+                    if(mapa[c.getRow()][c.getCol()] instanceof SettableBuildingCell)
+                    {
+                        ((BuildingCell) mapa[c.getRow()][c.getCol()]).removeGarbage();
+                    }
+                }
+            }
+            else
+            {
+                System.out.println("............NOOO...DeletingOneUnitOfGarbage...........");
+            }
+        }catch (Exception e) {
+
+        }
+    }
+    
      public void moveAgents() {
         InfoAgent info;
         int i,j, g, ri, rj, imax, jmax;
@@ -193,6 +255,11 @@ public class RequestForNewSimulationStepBehaviour extends SimpleBehaviour
         GameSettings game;
         game = agent.getGame();
         mapa = game.getMap();
+        int ri, rj, imax, jmax, movement;
+        Random randomCell = new Random();
+        imax = mapa.length;
+        jmax = mapa[0].length;
+        boolean found = false;
         
         int prob = game.getNewGarbageProbability();
         int max = game.getMaxAmountOfNewGargabe();
@@ -206,39 +273,42 @@ public class RequestForNewSimulationStepBehaviour extends SimpleBehaviour
        
         String[] types = {"G", "P", "L"};
         int type;
-        for(int i = 0; i < mapa.length; ++i)
+        
+        while (!found)
         {
-            for(int j = 0; j < mapa[i].length; ++j)
+            ri  = Math.abs(randomCell.nextInt(imax)) + 0;
+            rj  = Math.abs(randomCell.nextInt(jmax)) + 0;
+            
+            if (mapa[ri][rj] instanceof SettableBuildingCell) 
             {
-                if (mapa[i][j] instanceof SettableBuildingCell) 
+                BuildingCell cell = (BuildingCell) mapa[ri][rj]; 
+                Map<GarbageType,Integer> garbage;
+                garbage = cell.detectGarbage();
+
+                if(mapa[ri][rj] instanceof SettableBuildingCell && limit > 0)
                 {
-                    BuildingCell cell = (BuildingCell) mapa[i][j]; 
-                    Map<GarbageType,Integer> garbage;
-                    garbage = cell.detectGarbage();
-                    
-                    if(mapa[i][j] instanceof SettableBuildingCell && limit > 0)
+                    System.out.println("+++++++++++++++++++Spreading garbage...");
+                    if (garbage.isEmpty())
                     {
-                        System.out.println("+++++++++++++++++++Spreading garbage...");
-                        if (garbage.isEmpty())
-                        {
-                            System.out.println("+++++++++++++++++++(empty building)...");
-                            rand = ThreadLocalRandom.current().nextInt(1, max + 1);
-                            type = ThreadLocalRandom.current().nextInt(0, 3);
-                            SettableBuildingCell temp = (SettableBuildingCell) mapa[i][j];
-                            temp.setGarbage(GarbageType.fromShortString(types[type]), rand);
-                        }
-                        else
-                        {
-                            System.out.println("+++++++++++++++++++(NOT empty building)... "+garbage.keySet().iterator().next().getShortString()+":"+garbage.values().iterator().next());
-                        }
-                        
+                        System.out.println("+++++++++++++++++++(empty building)...");
+                        rand = ThreadLocalRandom.current().nextInt(1, max + 1);
+                        type = ThreadLocalRandom.current().nextInt(0, 3);
+                        SettableBuildingCell temp = (SettableBuildingCell) mapa[ri][rj];
+                        temp.setGarbage(GarbageType.fromShortString(types[type]), rand);
                         limit -= 1;
                     }
-                    
+                    else
+                    {
+                        System.out.println("+++++++++++++++++++(NOT empty building)... "+garbage.keySet().iterator().next().getShortString()+":"+garbage.values().iterator().next());
+                    }
                 }
+                
+                if (!(limit > 0))
+                    found = true;
 
             }
         }
+        found = false;
     }
      
      
