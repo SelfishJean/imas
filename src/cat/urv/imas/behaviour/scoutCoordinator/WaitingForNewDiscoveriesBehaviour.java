@@ -95,7 +95,7 @@ public class WaitingForNewDiscoveriesBehaviour extends SimpleBehaviour
                             //System.out.println("-------------before");
                             ArrayList<InfoDiscovery> newDiscoveries = (ArrayList<InfoDiscovery>) response.getContentObject();
                             /*try {
-                                System.out.println("*_*_*_*_*_*_*_*_*_*_*_*_*_*"+newDiscoveries.iterator().next().getGarbage());
+                                System.out.println("\n\nSC*_*_*_*_*_*_*_*_*_*_*_*_*_*"+newDiscoveries.iterator().next().getGarbage());
                             } catch (Exception e){
                                 
                             }*/
