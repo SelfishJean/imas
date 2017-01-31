@@ -4,8 +4,6 @@
  * and open the template in the editor.
  */
 package cat.urv.imas.behaviour.coordinator;
-import cat.urv.imas.behaviour.scoutCoordinator.*;
-import cat.urv.imas.behaviour.coordinator.*;
 import jade.core.behaviours.*;
 import jade.core.Agent;
 import jade.core.AID;
@@ -15,69 +13,72 @@ import cat.urv.imas.onthology.MessageContent;
 import jade.lang.acl.*;
 import java.util.ArrayList;
 import cat.urv.imas.agent.*;
-import cat.urv.imas.map.Cell;
 import cat.urv.imas.onthology.GameSettings;
-import cat.urv.imas.onthology.InfoDiscovery;
-import cat.urv.imas.onthology.InfoMapChanges;
 import jade.core.Agent;
 /**
- * 
- * @author albertOlivares
+ *
+ * @author Alex
  */
-public class WaitingForNewDiscoveriesBehaviour extends SimpleBehaviour
+public class SendingNewChangesOnMapBehaviour extends SimpleBehaviour
 {
     private ACLMessage msg;
     boolean hasReply;
     
-    public WaitingForNewDiscoveriesBehaviour(Agent a) 
+    public SendingNewChangesOnMapBehaviour(Agent a) 
     {
         super(a);
+
     }
     
     @Override
     public void action() 
     { 
-        System.out.println("(CoordinatorAgent) Starting WaitingForNewDiscoveriesBehaviour");
-        CoordinatorAgent agent = (CoordinatorAgent)this.getAgent();
+        CoordinatorAgent agent = (CoordinatorAgent) this.getAgent();
+        
+        // We set the value of the message. IT IS NECESSARY TO BE HERE BECAUSE THE INFO WE SEND CHANGES EVERY TURN
+        ACLMessage NewStepRequest = new ACLMessage(ACLMessage.REQUEST);
+        NewStepRequest.clearAllReceiver();
+        NewStepRequest.addReceiver(agent.systemAgent);
+        NewStepRequest.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
+        agent.log("Request message to agent");
+        try {
+            
+            NewStepRequest.setContentObject(agent.newChangesOnMap);
+            agent.log("Request message to send NewChanges");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
+        this.msg = NewStepRequest;
 
         hasReply = false;
+        myAgent.send(msg);
         
         while(done() == false) 
         {
             ACLMessage response = myAgent.receive();
-            //System.out.println("Waiting....");
-            
 
             if(response != null) 
             {
-                //System.out.println("Waiting...."+response);
                 //System.out.println(response.getPerformative());
                 //CoordinatorAgent agent = (CoordinatorAgent) myAgent;
                 //CoordinatorAgent agent = (CoordinatorAgent) this.getAgent();
                 switch(response.getPerformative()) 
                 {
+                    case ACLMessage.AGREE:
+                        agent.log("AGREE received from " + ((AID) response.getSender()).getLocalName());
+                        break;
                     case ACLMessage.INFORM:
-                        agent.log("INFORM (new discoveries) received from " + ((AID) response.getSender()).getLocalName());
-                        
+                        agent.log("INFORM (new changes confirmation) received from " + ((AID) response.getSender()).getLocalName());
+                        hasReply = true;
                         try 
                         {
-                            ArrayList<InfoDiscovery> newDiscoveries = (ArrayList<InfoDiscovery>) response.getContentObject();
-                            /*try {
-                                System.out.println("CA*_*_*_*_*_*_*_*_*_*_*_*_*_*"+newDiscoveries.iterator().next().getGarbage());
-                            } catch (Exception e){
-                                
-                            }*/
-                            
-                            agent.setNewInfoDiscoveriesList(newDiscoveries);
-                            agent.log("New discoveries saved");
-                            
-                            //ACLMessage reply = response.createReply(); 
-                            // Sending an Agree..
-                            //reply.setPerformative(ACLMessage.AGREE);
-                            //agent.log("Sending Agreement");
-                            //agent.send(reply);
-                            hasReply = true;
-                            
+                            Object content = (Object) response.getContent();
+                            if (content.equals(MessageContent.NEXT_STEP)) {
+                                agent.log("System Agent has received the changes.");
+                            }
+                            else 
+                                agent.log("System Agent has NOT received the changes. WHY?");
                         } 
                         catch (Exception e) 
                         {
