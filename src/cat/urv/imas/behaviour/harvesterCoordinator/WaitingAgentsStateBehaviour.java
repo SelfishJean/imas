@@ -29,10 +29,9 @@ import cat.urv.imas.agent.SystemAgent;
 import cat.urv.imas.map.Cell;
 import cat.urv.imas.map.CellType;
 import cat.urv.imas.map.StreetCell;
+import cat.urv.imas.map.BuildingCell;
 import cat.urv.imas.onthology.GameSettings;
 import cat.urv.imas.onthology.InfoAgent;
-import cat.urv.imas.onthology.InfoDiscovery;
-import cat.urv.imas.onthology.InfoMapChanges;
 import cat.urv.imas.onthology.MessageContent;
 import jade.core.AID;
 import java.util.List;
@@ -55,15 +54,13 @@ public class WaitingAgentsStateBehaviour extends SimpleBehaviour
     public WaitingAgentsStateBehaviour(Agent agent) 
     {
         super(agent);
-        
-        HarvestCoordinator a = (HarvestCoordinator) this.getAgent();
         hasReply = false;
         first = true;
         allHarvesters = new ArrayList<InfoAgent>();
         count = 0;
-        a.initializeOngoingGoals();
-        
         //agent.log("Waiting REQUESTs of the map from authorized agents");
+        HarvestCoordinator a = (HarvestCoordinator) this.getAgent();
+        a.initializeOngoingGoals();
         System.out.println("(HarvesterCoordinator) Waiting REQUESTs sending states from authorized agents");
     }
 
@@ -74,6 +71,20 @@ public class WaitingAgentsStateBehaviour extends SimpleBehaviour
         agent.log("Starting WaitingAgentsStateBehaviour");
         agent.initializeCellsCollectedGarbage();
         //boolean communicationOK = false;
+        
+        Map<AID, Cell> onGoingGoals = agent.getOngoingGoals();
+        for (Map.Entry<AID, Cell> entry : onGoingGoals.entrySet()) 
+        {
+            if(entry.getValue().getCellType() == CellType.BUILDING)
+            {
+                BuildingCell temp = (BuildingCell) entry.getValue();
+                if(temp.detectGarbage().isEmpty())
+                {
+                    onGoingGoals.remove(entry);
+                }
+            }
+        }
+        
         
         if (first)
         {
@@ -111,50 +122,65 @@ public class WaitingAgentsStateBehaviour extends SimpleBehaviour
                                 {
                                     case MessageContent.FREE:
                                         agent.log(content.toString());
+                                        /* HERE WE HAVE TWO OPTIONS: THERE ARE GOALS OR NOT.
+
+                                        IF THERE ARE GOALS...RUN A FUNCTION TO CHOOSE ONE AND SEND A CELL AS AN OBJECT
+                                            reply2.setContentObject(CELL WHIT GARBAGE);
+                                        IF THERE ARE NOT GOALS...SEND A MESSAGE INFORMING ABOUT IT
+                                            reply2.setContent(MessageContent.NO_GOAL);
+
+                                        For the time being, in order to keep it as simple as possible, we 
+                                        are going to use just NO_GOAL and we will choose randomly in the other side 
+                                        to run StartingGoalBehaviour or ChillingBehaviour.
+                                        */
+
+                                        /*try { 
+                                            boolean condition;
+                                            condition = agent.newInfoDiscoveriesList.isEmpty();
+                                            System.out.println("WaitingStates_______________________BeforeAdding"+agent.newInfoDiscoveriesList.size());
+                                            if (!condition) { // Even though we have initialized it in the previous step, it could be empty (No discoveries for previous scout)
+                                                System.out.println("WaitingStates_______________________AfterAdding"+agent.newInfoDiscoveriesList.size());
+                                            }
+                                            else
+                                            {
+                                                System.out.println("WaitingStates_________________________EMPTY DISCOVERIES");
+                                            }
+                                        }catch (Exception e) {
+
+                                        }*/
 
                                         try { 
                                             boolean condition;
                                             condition = agent.newInfoDiscoveriesList.isEmpty();
-                                            AID sender;
-                                            sender = (AID) response.getSender();
+                                            AID sender = (AID) response.getSender();
                                             if (!condition) { 
-                                                System.out.println("_________________________________WaitingAgentsState   DiscoveriesListSizeBeforeRemoving"+agent.newInfoDiscoveriesList.size());
                                                 Cell c;
+                                                // modified**
+                                                AID harvester = response.getSender();
                                                 
-                                                InfoDiscovery info = agent.newInfoDiscoveriesList.get(0);
-                                                agent.newInfoDiscoveriesList.remove(0); //This causes a problem, if we delete the goal if we find it again we will take it into account again.
-                                                System.out.println("_________________________________WaitingAgentsState   DiscoveriesListSize"+agent.newInfoDiscoveriesList.size());
+                                                Cell[] result = agent.assignGoal(harvester);
+                                                c = result[0];
+                                                Cell c2 = result[1];
                                                 
-                                                c = agent.game.getMap()[info.getRow()][info.getColumn()];
-                                                
+                                                // carefull, Alex
                                                 Map<AID, Cell> currentGoals = agent.getOngoingGoals();
                                                 if (!currentGoals.containsKey(sender))
                                                 {
-                                                    agent.addOngoingGoals(sender, c); // it is already initialized in constructor.
+                                                    agent.addOngoingGoals(sender, c2); // it is already initialized in constructor.
                                                 }
                                                 else
                                                 {
                                                     System.out.println("_________________________________WaitingAgentsState   Sender has already a goal"+sender.getLocalName());
                                                 }
                                                 
-                                                
-                                                reply2.setContentObject(c);
+                                                reply2.setContentObject(result);
                                                 //System.out.println("WaitingStates_______________________THERE ARE DISCOVERIES"+agent.newInfoDiscoveriesList.size());
                                             }
                                             else
                                             {
                                                 reply2.setContent(MessageContent.NO_GOAL);
-                                                System.out.println("WaitingStates_________________________EMPTY DISCOVERIES");
+                                                //System.out.println("WaitingStates_________________________EMPTY DISCOVERIES");
                                             }
-
-                                            // The following part should be in the case MessageContent.COLLECTING:
-                                            Map<AID, Cell> currentGoals = agent.getOngoingGoals();
-                                            if (currentGoals.containsKey(sender))
-                                            {
-                                                System.out.println("_________________________________WaitingAgentsState   Cell"+currentGoals.get(sender));
-                                                agent.addCellsCollectedGarbage(currentGoals.get(sender)); // already initialized (beginning action method)
-                                            }
-                                            
                                         }catch (Exception e) {
 
                                         }
@@ -164,6 +190,13 @@ public class WaitingAgentsStateBehaviour extends SimpleBehaviour
                                         reply2.setContent(MessageContent.OK);
                                         break;
                                     case MessageContent.COLLECTING:
+                                        AID sender = (AID) response.getSender();
+                                        Map<AID, Cell> currentGoals = agent.getOngoingGoals();
+                                        if (currentGoals.containsKey(sender)) 
+                                        {
+                                            System.out.println("_________________________________WaitingAgentsState   Cell" + currentGoals.get(sender));
+                                            agent.addCellsCollectedGarbage(currentGoals.get(sender)); // already initialized (beginning action method)
+                                        }
                                         agent.log(content.toString());
                                         reply2.setContent(MessageContent.OK);
                                         break;

@@ -73,7 +73,7 @@ public class WaitingForNewDiscoveriesBehaviour extends SimpleBehaviour
                             else // Once it is initialized we can just add new discoveries.
                                 agent.addNewInfoDiscoveriesList(newDiscoveries);
                               
-                            agent.log("New discoveries saved");
+                            //agent.log("New discoveries saved");
                             
                             //ACLMessage reply = response.createReply(); 
                             // Sending an Agree..
@@ -89,10 +89,10 @@ public class WaitingForNewDiscoveriesBehaviour extends SimpleBehaviour
                         }
                         break;
                     case ACLMessage.FAILURE:
-                        agent.log("The action has failed.");
+                        //agent.log("The action has failed.");
                         break;
                     default:
-                        agent.log("Failed to process the message");
+                        //agent.log("Failed to process the message");
                         ACLMessage reply = response.createReply(); 
                         // Sending a Failure
                         reply.setPerformative(ACLMessage.FAILURE);
