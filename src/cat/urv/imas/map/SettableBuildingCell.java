@@ -1,5 +1,5 @@
 /**
- * IMAS base code for the practical work. 
+ * IMAS base code for the practical work.
  * Copyright (C) 2016 DEIM - URV
  *
  * This program is free software: you can redistribute it and/or modify it under
@@ -20,16 +20,16 @@ package cat.urv.imas.map;
 import cat.urv.imas.onthology.GarbageType;
 
 /**
- * Building cell API for System agent which allows to set new garbage in buildings.
- * Set new garbage on building is restricted only to System agent, so that
- * BuildingCell is the API provided to agents.
+ * Building cell API for System agent which allows to set new garbage in
+ * buildings. Set new garbage on building is restricted only to System agent, so
+ * that BuildingCell is the API provided to agents.
  */
 public class SettableBuildingCell extends BuildingCell {
-    
+
     public SettableBuildingCell(int row, int col) {
         super(row, col);
     }
-    
+
     public void setGarbage(GarbageType type, int amount) {
         if (!garbage.isEmpty()) {
             throw new IllegalStateException("This building (" + this.getRow() + "," + this.getCol() + ") has garbage yet: " + this.getMapMessage());

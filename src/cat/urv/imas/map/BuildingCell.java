@@ -1,5 +1,5 @@
 /**
- * IMAS base code for the practical work. 
+ * IMAS base code for the practical work.
  * Copyright (C) 2014 DEIM - URV
  *
  * This program is free software: you can redistribute it and/or modify it under
@@ -26,23 +26,23 @@ import java.util.Map;
  * Building cell.
  */
 public class BuildingCell extends Cell {
-    
+
     /**
      * When this garbage is not found yet, an empty list of garbage is returned.
      */
     protected static Map<GarbageType, Integer> empty = new HashMap();
 
     /**
-     * Garbage of the building: it can only be of one type at a time.
-     * But, once generated, it can be of any type and amount.
+     * Garbage of the building: it can only be of one type at a time. But, once
+     * generated, it can be of any type and amount.
      */
     protected Map<GarbageType, Integer> garbage;
     /**
-     * If true, scouts have found this garbage. false when scouts have
-     * to find it yet.
+     * If true, scouts have found this garbage. false when scouts have to find
+     * it yet.
      */
     protected boolean found = false;
-    
+
     /**
      * Builds a cell corresponding to a building.
      *
@@ -53,9 +53,10 @@ public class BuildingCell extends Cell {
         super(CellType.BUILDING, row, col);
         garbage = new HashMap();
     }
-    
+
     /**
      * Detects the real garbage on this building.
+     *
      * @return the garbage on it.
      */
     public Map<GarbageType, Integer> detectGarbage() {
@@ -64,33 +65,33 @@ public class BuildingCell extends Cell {
     }
 
     /**
-     * Whenever the garbage has been detected, it informs about the 
-     * current garbage on this building. Otherwise, it will behave as if
-     * no garbage was in.
+     * Whenever the garbage has been detected, it informs about the current
+     * garbage on this building. Otherwise, it will behave as if no garbage was
+     * in.
+     *
      * @return the garbage on it.
      */
     public Map<GarbageType, Integer> getGarbage() {
         return (found) ? garbage : empty;
     }
-    
+
     /**
-     * Removes an item of the current garbage, if any.
-     * When there is no more garbage after removing it, the set of 
-     * garbage is emptied.
+     * Removes an item of the current garbage, if any. When there is no more
+     * garbage after removing it, the set of garbage is emptied.
      */
     public void removeGarbage() {
         if (found && garbage.size() > 0) {
-            for (Map.Entry<GarbageType, Integer> entry: garbage.entrySet()) {
+            for (Map.Entry<GarbageType, Integer> entry : garbage.entrySet()) {
                 if (entry.getValue() == 1) {
                     garbage.clear();
                     found = false;
                 } else {
-                    garbage.replace(entry.getKey(), entry.getValue()-1);
+                    garbage.replace(entry.getKey(), entry.getValue() - 1);
                 }
             }
         }
     }
-    
+
     /**
      * Gets the value of variable Found.
      *
@@ -99,7 +100,7 @@ public class BuildingCell extends Cell {
     public boolean getFound() {
         return this.found;
     }
-    
+
     /**
      * Sets the value of variable Found.
      *
@@ -108,9 +109,8 @@ public class BuildingCell extends Cell {
     public void setFound(boolean temp) {
         this.found = temp;
     }
-    
+
     /* ***************** Map visualization API ********************************/
-    
     @Override
     public void draw(CellVisualizer visual) {
         visual.drawBuilding(this);
@@ -120,9 +120,9 @@ public class BuildingCell extends Cell {
      * Shows the type of garbage and the amount of it, with the form:
      * <pre>
      *    {type}:{amount}
-     * </pre>
-     * or an empty string if no garbage is present. A star is placed at the end
-     * of the string if the garbage is found by scouts.
+     * </pre> or an empty string if no garbage is present. A star is placed at
+     * the end of the string if the garbage is found by scouts.
+     *
      * @return String detail of the garbage present in this building.
      */
     @Override
@@ -130,9 +130,9 @@ public class BuildingCell extends Cell {
         if (garbage.isEmpty()) {
             return "";
         }
-        for (Map.Entry<GarbageType, Integer> entry: garbage.entrySet()) {
-            return entry.getKey().getShortString() + ":" + entry.getValue() + 
-                    ((found) ? "*" : "");
+        for (Map.Entry<GarbageType, Integer> entry : garbage.entrySet()) {
+            return entry.getKey().getShortString() + ":" + entry.getValue()
+                    + ((found) ? "*" : "");
         }
         return "";
     }

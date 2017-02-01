@@ -1,5 +1,5 @@
 /**
- * IMAS base code for the practical work. 
+ * IMAS base code for the practical work.
  * Copyright (C) 2014 DEIM - URV
  *
  * This program is free software: you can redistribute it and/or modify it under
@@ -70,46 +70,29 @@ public class StreetCell extends Cell {
     }
 
     public void removeAgent(InfoAgent oldInfoAgent) throws Exception {
-        //System.out.println("Remove an agent to " + this.toString());
         if (!this.isThereAnAgent()) {
-            System.out.println("From removeAgent method...");
             throw new Exception("There is no agent in cell");
         }
         if (oldInfoAgent == null) {
-            System.out.println("From removeAgent method...");
             throw new Exception("No valid agent to be remove (null).");
-        } 
-/* With this statement does not work..
-        if (!this.agent.equals(oldInfoAgent)) {
-            System.out.println("From removeAgent method...");
-            throw new Exception("No matching agent to be remove.");
-        } 
-*/        
-        // if everything is OK, we remove the agent from the cell
+        }
+
         this.agent = null;
-        //System.out.println("From removeAgent method...");
-        //System.out.println(this.isThereAnAgent());
-
-
-        // if everything is OK, we remove the agent from the cell
-        /*this.agent = null;
-        System.out.println("From removeAgent method...");
-        System.out.println(this.isThereAnAgent());*/
 
     }
-    
+
     public void removeAgentWithAID(AID currentAgent) {
-            try{
-                    if(this.agent != null){
-                            if(currentAgent.equals(this.agent.getAID())){
-                                    this.agent = null;
-                            }
-                    }
-            } catch(Exception e){
-                    System.err.println(e);
+        try {
+            if (this.agent != null) {
+                if (currentAgent.equals(this.agent.getAID())) {
+                    this.agent = null;
+                }
             }
+        } catch (Exception e) {
+            System.err.println(e);
+        }
     }
-        
+
     /**
      * Get the current agent from this cell.
      *

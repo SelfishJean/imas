@@ -5,17 +5,9 @@
  */
 package cat.urv.imas.onthology;
 
-import cat.urv.imas.agent.AgentType;
-import cat.urv.imas.map.Cell;
-import cat.urv.imas.map.StreetCell;
-import cat.urv.imas.gui.*;
 import static cat.urv.imas.onthology.InitialGameSettings.*;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
@@ -46,34 +38,33 @@ public class GenerateGameSettings {
             {0, 10, 9},
             {9, 0, 10},
             {10, 9, 0},
-            {9, 9, 0},
-        });
+            {9, 9, 0},});
         settings.setSimulationSteps(STEPS);
         settings.setTitle("Practical IMAS");
         //add here whatever settings.set* to define your new settings.
         // settings for first date
         int[][] map
-            = {
-                {10, 10, R, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10},
-                {10,  S,  S,  S,  SC,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  H,  SC,  S,  S,  S,  S, 10},
-                {10,  S,  H,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S, 10},
-                {10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10},
-                {10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10},
-                {10,  S,  S, 10, 10,  S,  S,  S,  S,  S,  S, 10, 10,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S, 10},
-                {10,  S,  S, 10, 10,  S,  S,  S,  S,  S,  S, 10, 10,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S, 10},
-                {10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10, 10,  S,  S, 10},
-                {10,  S,  S, 10,  R,  S,  H, 10, 10,  S,  S, 10, 10,  H,  S, 10, 10,  S,  S, 10, 10,  S,  S,  S, 10},
-                {10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S,  R, 10,  S,  S, 10, 10,  S,  H, 10, 10,  S,  S,  S, 10},
-                {10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S,  S, 10},
-                {10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  SC,  S,  S, 10},
-                {10,  S,  S, 10, 10,  H,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S,  S, 10},
-                {10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10},
-                {10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  SC,  S, 10, 10,  S,  S,  S, 10},
-                {10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S,  S, 10},
-                {10,  S,  S, 10, 10,  S,  S, 10, 10,  SC,  S, 10, 10,  S,  S, 10, 10,  S,  S, R, 10,  S,  S,  S, 10},
-                {10,  S,  H,  S,  S,  S,  S, 10, 10,  S,  S,  S,  S,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S,  S, 10},
-                {10,  S,  S,  S,  S,  S,  S, 10, 10,  S,  S,  S,  S,  S,  S, 10, 10,  S,  S, 10, 10,  S,  S,  S, 10},
-                {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10},};
+                = {
+                    {10, 10, R, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10},
+                    {10, S, S, S, SC, S, S, S, S, S, S, S, S, S, S, S, S, S, H, SC, S, S, S, S, 10},
+                    {10, S, H, S, S, S, S, S, S, S, S, S, S, S, S, S, S, S, S, S, S, S, S, S, 10},
+                    {10, S, S, 10, 10, S, S, 10, 10, S, S, 10, 10, S, S, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10},
+                    {10, S, S, 10, 10, S, S, 10, 10, S, S, 10, 10, S, S, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10},
+                    {10, S, S, 10, 10, S, S, S, S, S, S, 10, 10, S, S, S, S, S, S, S, S, S, S, S, 10},
+                    {10, S, S, 10, 10, S, S, S, S, S, S, 10, 10, S, S, S, S, S, S, S, S, S, S, S, 10},
+                    {10, S, S, 10, 10, S, S, 10, 10, S, S, 10, 10, S, S, 10, 10, S, S, 10, 10, 10, S, S, 10},
+                    {10, S, S, 10, R, S, H, 10, 10, S, S, 10, 10, H, S, 10, 10, S, S, 10, 10, S, S, S, 10},
+                    {10, S, S, 10, 10, S, S, 10, 10, S, S, R, 10, S, S, 10, 10, S, H, 10, 10, S, S, S, 10},
+                    {10, S, S, 10, 10, S, S, 10, 10, S, S, 10, 10, S, S, 10, 10, S, S, 10, 10, S, S, S, 10},
+                    {10, S, S, 10, 10, S, S, 10, 10, S, S, 10, 10, S, S, 10, 10, S, S, 10, 10, SC, S, S, 10},
+                    {10, S, S, 10, 10, H, S, 10, 10, S, S, 10, 10, S, S, 10, 10, S, S, 10, 10, S, S, S, 10},
+                    {10, S, S, 10, 10, S, S, 10, 10, S, S, 10, 10, S, S, 10, 10, S, S, 10, 10, S, S, 10, 10},
+                    {10, S, S, 10, 10, S, S, 10, 10, S, S, 10, 10, S, S, 10, 10, SC, S, 10, 10, S, S, S, 10},
+                    {10, S, S, 10, 10, S, S, 10, 10, S, S, 10, 10, S, S, 10, 10, S, S, 10, 10, S, S, S, 10},
+                    {10, S, S, 10, 10, S, S, 10, 10, SC, S, 10, 10, S, S, 10, 10, S, S, R, 10, S, S, S, 10},
+                    {10, S, H, S, S, S, S, 10, 10, S, S, S, S, S, S, 10, 10, S, S, 10, 10, S, S, S, 10},
+                    {10, S, S, S, S, S, S, 10, 10, S, S, S, S, S, S, 10, 10, S, S, 10, 10, S, S, S, 10},
+                    {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10},};
         settings.setHarvestersCapacity(6);
         settings.setSupportedGarbageByHarvesters(new String[][]{
             {L},
@@ -82,14 +73,12 @@ public class GenerateGameSettings {
             {G, P},
             {L, P},
             {G, L},
-            {G, P},
-        });
+            {G, P},});
         settings.setRecyclingCenterPrices(new int[][]{
             {9, 10, 0},
             {10, 0, 9},
             {0, 9, 10},
-            {2, 8, 6},
-        });
+            {2, 8, 6},});
         settings.setInitialMap(map);
     }
 
@@ -103,13 +92,12 @@ public class GenerateGameSettings {
      */
     public static final void main(String[] args) throws Exception {
         InitialGameSettings settings = new InitialGameSettings();
-        
+
         defineSettings(settings);
         storeSettings(settings);
-        
+
         testSettings();
     }
-
 
     /**
      * Produces an XML file with the whole set of settings from the given

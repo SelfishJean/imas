@@ -1,5 +1,5 @@
 /**
- * IMAS base code for the practical work. 
+ * IMAS base code for the practical work.
  * Copyright (C) 2014 DEIM - URV
  *
  * This program is free software: you can redistribute it and/or modify it under
@@ -46,14 +46,13 @@ public class RecyclingCenterCell extends Cell {
     public void draw(CellVisualizer visual) {
         visual.drawRecyclingCenter(this);
     }
-    
+
     @Override
     public String getMapMessage() {
         return prices[0] + "/" + prices[1] + "/" + prices[2];
     }
-    
-    public int[] getPrices()
-    {
+
+    public int[] getPrices() {
         return prices;
     }
 }

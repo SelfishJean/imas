@@ -1,5 +1,5 @@
 /**
- * IMAS base code for the practical work. 
+ * IMAS base code for the practical work.
  * Copyright (C) 2014 DEIM - URV
  *
  * This program is free software: you can redistribute it and/or modify it under
@@ -20,9 +20,9 @@ package cat.urv.imas.map;
 import cat.urv.imas.gui.CellVisualizer;
 
 /**
- * This class keeps all the information about a cell in the map.
- * Coordinates (row, col) are zero based. This means all values goes from
- * [0..n-1], both included, for each dimension.
+ * This class keeps all the information about a cell in the map. Coordinates
+ * (row, col) are zero based. This means all values goes from [0..n-1], both
+ * included, for each dimension.
  */
 public abstract class Cell implements java.io.Serializable {
 
@@ -94,26 +94,28 @@ public abstract class Cell implements java.io.Serializable {
         str += this.toStringSpecialization();
         return str + ")";
     }
-    
+
     /**
      * Allows subclasses to build a specific string.
+     *
      * @return string specialization for the cell.
      */
     public String toStringSpecialization() {
         return "";
     }
-    
+
     /* ************ Map visualization ****************************************/
-    
     /**
      * The cell will be asked to be drawn, using the given CellVisualizer API.
      * To do so, it also has to override when necessary the getMessage() method.
+     *
      * @param visual provides the API to draw any kind of cell.
      */
     public abstract void draw(CellVisualizer visual);
-    
+
     /**
      * Tells the message to show in the map. Empty string to paint nothing.
+     *
      * @return The text to show in the map, located in the current cell.
      */
     public String getMapMessage() {
