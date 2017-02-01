@@ -17,6 +17,7 @@
  */
 package cat.urv.imas.agent;
 
+import static cat.urv.imas.agent.ImasAgent.OWNER;
 import static cat.urv.imas.agent.UtilsAgents.createAgent;
 import static cat.urv.imas.agent.UtilsAgents.searchAgent;
 import cat.urv.imas.onthology.InitialGameSettings;
@@ -459,3 +460,4 @@ public class SystemAgent extends ImasAgent {
     }
 
 }
+

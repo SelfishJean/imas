@@ -20,6 +20,7 @@ package cat.urv.imas.agent;
 import static cat.urv.imas.agent.ImasAgent.OWNER;
 import cat.urv.imas.behaviour.harvesterCoordinator.*;
 import cat.urv.imas.map.Cell;
+import cat.urv.imas.map.CellType;
 import cat.urv.imas.map.StreetCell;
 import cat.urv.imas.onthology.GameSettings;
 import cat.urv.imas.onthology.InfoAgent;
@@ -59,6 +60,7 @@ public class HarvestCoordinator extends ImasAgent {
      * InfoDiscovery. It contains all new discoveries of a turn.
      */
     public ArrayList<InfoDiscovery> newInfoDiscoveriesList;
+
     /**
      * OngoingGoals. All goals our harvester are doing. Once we have assigned a goal
      * we save it in this variable (we consider the trip until the building as part 
@@ -70,9 +72,8 @@ public class HarvestCoordinator extends ImasAgent {
      * in this turn. 
      */
     public ArrayList<Cell> cellsCollectedGarbage;
-
     
-    /**
+        /**
      * Update the game settings.
      *
      * @param game current game settings.
@@ -133,7 +134,18 @@ public class HarvestCoordinator extends ImasAgent {
      */
     public void addNewInfoAgent(InfoAgent newInfo) {
         try { 
-            this.newInfoAgent.add(newInfo);
+            boolean condition;
+            condition = this.newInfoAgent.isEmpty();
+            //System.out.println("SC_______________________"+this.newInfoDiscoveriesList.size());
+            if (!condition) { // Even though we have initialized it in the previous step, it could be empty (No discoveries for previous scout)
+                this.newInfoAgent.add(newInfo); 
+                //System.out.println("SC_______________________"+this.newInfoDiscoveriesList.size());
+            }
+            else
+            {
+                this.newInfoAgent.add(newInfo);
+                //System.out.println("SC_________________________ EMPTY DISCOVERIES");
+            }
         }catch (Exception e) {
             
         }
@@ -167,25 +179,41 @@ public class HarvestCoordinator extends ImasAgent {
             boolean condition;
             condition = this.newInfoDiscoveriesList.isEmpty();
             //System.out.println("HC_______________________BeforeAdding"+this.newInfoDiscoveriesList.size());
-            if (!condition) { // Even though we have initialized it in the previous step, it could be empty (No discoveries for previous scout)
+            if (!condition) 
+            { // Even though we have initialized it in the previous step, it could be empty (No discoveries for previous scout)
+                /*
+                for(int i = 0; i < newInfo.size(); ++i)
+                {
+                    if(this.newInfoDiscoveriesList.contains(newInfo.get(i)) == false)
+                    {
+                        System.out.print("Heap size:" + this.newInfoDiscoveriesList.size() 
+                                + "; garbage:" + newInfo.get(i).getGarbage().toString() 
+                                + newInfo.get(i).getRow() + newInfo.get(i).getColumn());
+                        this.newInfoDiscoveriesList.add(newInfo.get(i));
+                    }
+                }*/
                 for (int g = 0; g < newInfo.size(); g++)
                 {
                     ArrayList<InfoDiscovery> tempList;
                     tempList = (ArrayList<InfoDiscovery>)this.newInfoDiscoveriesList.clone();
+                    boolean add = true;
                     for (int y = 0; y < tempList.size(); y++)
                     {
                         InfoDiscovery temp;
                         temp = tempList.get(y);
-                        if (!(temp.getColumn() == newInfo.get(g).getColumn() && temp.getRow() == newInfo.get(g).getRow())) // We avoid multiple detection of same garbage.
+                        if(temp.getColumn() == newInfo.get(g).getColumn() && temp.getRow() == newInfo.get(g).getRow()) 
                         {
-                            this.newInfoDiscoveriesList.add(newInfo.get(g)); 
-                            //System.out.println("HC_______________________AfterAdding"+this.newInfoDiscoveriesList.size());
-
+                            add = false;
+                            break;
                         }
-                        else 
-                        {
-                            //System.out.println("HC__________InfoAlready_____________AfterNOTAdding"+this.newInfoDiscoveriesList.size());
-                        }
+                    }
+                    
+                    if(add == true)
+                    {
+                        this.log("Heap size:" + this.newInfoDiscoveriesList.size() 
+                                + "; garbage:" + newInfo.get(g).getGarbage().toString() 
+                                + newInfo.get(g).getRow() + " " + newInfo.get(g).getColumn());
+                        this.newInfoDiscoveriesList.add(newInfo.get(g));
                     }
                 }
             }
@@ -199,7 +227,7 @@ public class HarvestCoordinator extends ImasAgent {
         }
     }
 
-    /**
+     /**
      * Initialization of ongoingGoals.
      *
      * @param temp new assigned goal.
@@ -369,9 +397,90 @@ public class HarvestCoordinator extends ImasAgent {
         fsm.registerDefaultTransition("STATE_7", "STATE_8", new String[] {"STATE_8"});
         fsm.registerDefaultTransition("STATE_8", "STATE_2");
         
+        /*
+        fsm.registerFirstState(new WaitingForMapBehaviour(this), "STATE_1");
+        fsm.registerState(new SendingMapBehaviour(this), "STATE_2");
+        fsm.registerState(new WaitingForNewDiscoveriesBehaviour(this), "STATE_3");
+        fsm.registerState(new WaitingAgentsStateBehaviour(this), "STATE_4");
+        //fsm.registerState(new GenerateNewPositionsBehaviour(this), "STATE_5");
+        fsm.registerState(new WaitingForNewPositionsBehaviour(this), "STATE_5");
+        fsm.registerState(new SendingNewPositionsBehaviour(this), "STATE_6");
+        fsm.registerFirstState(new WaitingForMapBehaviour(this), "STATE_7");
+        
+        fsm.registerDefaultTransition("STATE_1", "STATE_2");
+        fsm.registerDefaultTransition("STATE_2", "STATE_3");
+        fsm.registerDefaultTransition("STATE_3", "STATE_4");
+        fsm.registerDefaultTransition("STATE_4", "STATE_5");
+        fsm.registerDefaultTransition("STATE_5", "STATE_6");
+        fsm.registerDefaultTransition("STATE_6", "STATE_7", new String[] {"STATE_7"});
+        fsm.registerDefaultTransition("STATE_7", "STATE_2");*/
+        
         this.addBehaviour(fsm);
 
         // setup finished. When we receive the last inform, the agent itself will add
         // a behaviour to send/receive actions
+    }
+    
+    
+    public Cell getCollectingCell(InfoAgent harvester, InfoDiscovery building)
+    {
+        Cell[][] map = game.getMap();
+        if(harvester.getRow() > building.getRow() 
+                && map[building.getRow() + 1][building.getColumn()].getCellType() == CellType.STREET)
+        {
+            return map[building.getRow() + 1][building.getColumn()];
+        }
+        else if((harvester.getRow() <= building.getRow() 
+                && map[building.getRow() - 1][building.getColumn()].getCellType() == CellType.STREET))
+        {
+            return map[building.getRow() - 1][building.getColumn()];
+        }
+        else if((harvester.getColumn() <= building.getColumn() 
+                && map[building.getRow()][building.getColumn() - 1].getCellType() == CellType.STREET))
+        {
+            return map[building.getRow()][building.getColumn() - 1];
+        }
+        else 
+        {
+            return map[building.getRow()][building.getColumn() + 1];
+        }
+    }
+    
+    public Cell[] assignGoal(AID harvesterAID)
+    {
+        InfoAgent harvester = null;
+        for(int i = 0; i < harvesters.size(); ++i)
+        {
+            if(harvesters.get(i).getAID().equals(harvesterAID))
+            {
+                harvester = harvesters.get(i);
+            }
+        }
+        
+        // get nearest garbage
+        ArrayList<InfoDiscovery> discoveries = this.getNewInfoDiscoveriesList();
+        double minDist = 10000;
+        int buildingIndex = 0;
+        for(int i = 0; i < discoveries.size(); ++i)
+        {
+            InfoDiscovery temp = discoveries.get(i);
+            double tempDist = (harvester.getRow() - temp.getRow()) + (harvester.getColumn() - temp.getColumn());
+            
+            if(tempDist < minDist)
+            {
+                minDist = tempDist;
+                buildingIndex = i;
+            }
+        }
+        
+        InfoDiscovery building = this.newInfoDiscoveriesList.remove(buildingIndex);
+        //System.out.printf("New goal: %d %d\n", building.getRow(), building.getColumn());
+        Cell goal = this.getCollectingCell(harvester, building);
+        Cell buildingCell = this.game.getMap()[building.getRow()][building.getColumn()];
+        
+        Cell[] result = {goal, buildingCell};
+             
+        //System.out.printf("Near goal: %d %d\n", goal.getRow(), goal.getCol());
+        return result;
     }
 }

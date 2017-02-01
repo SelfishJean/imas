@@ -17,6 +17,7 @@
  */
 package cat.urv.imas.agent;
 
+import static cat.urv.imas.agent.ImasAgent.OWNER;
 import cat.urv.imas.onthology.GameSettings;
 import cat.urv.imas.behaviour.coordinator.*;
 import cat.urv.imas.onthology.InfoAgent;
