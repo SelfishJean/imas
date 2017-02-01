@@ -4,30 +4,24 @@
  * and open the template in the editor.
  */
 package cat.urv.imas.behaviour.coordinator;
+
 import jade.core.behaviours.*;
-import jade.core.Agent;
 import jade.core.AID;
 import jade.domain.FIPANames;
 import jade.lang.acl.ACLMessage;
 import cat.urv.imas.onthology.MessageContent;
-import jade.lang.acl.*;
-import java.util.ArrayList;
 import cat.urv.imas.agent.*;
 import cat.urv.imas.onthology.GameSettings;
 import jade.core.Agent;
-/**
- *
- * @author Alex
- */
-public class AskingForMapBehaviour extends SimpleBehaviour
-{
+
+public class AskingForMapBehaviour extends SimpleBehaviour {
+
     private ACLMessage msg;
     boolean hasReply;
-    
-    public AskingForMapBehaviour(Agent a) 
-    {
+
+    public AskingForMapBehaviour(Agent a) {
         super(a);
-        
+
         // We set the value of the first message.
         ACLMessage initialRequest = new ACLMessage(ACLMessage.REQUEST);
         initialRequest.clearAllReceiver();
@@ -38,50 +32,39 @@ public class AskingForMapBehaviour extends SimpleBehaviour
         try {
             initialRequest.setContent(MessageContent.GET_MAP);
             agent.log("Request message content:" + initialRequest.getContent());
-        } catch (Exception e) 
-        {
+        } catch (Exception e) {
             e.printStackTrace();
         }
-        
+
         this.msg = initialRequest;
     }
-    
+
     @Override
-    public void action() 
-    { 
+    public void action() {
         System.out.println("Starting AskingForMapBehaviour");
         CoordinatorAgent agent = (CoordinatorAgent) this.getAgent();
 
         hasReply = false;
         myAgent.send(msg);
-        
-        while(done() == false) 
-        {
+
+        while (done() == false) {
             ACLMessage response = myAgent.receive();
 
-            if(response != null) 
-            {
-                //System.out.println(response.getPerformative());
-                //CoordinatorAgent agent = (CoordinatorAgent) myAgent;
-                //CoordinatorAgent agent = (CoordinatorAgent) this.getAgent();
-                switch(response.getPerformative()) 
-                {
+            if (response != null) {
+                switch (response.getPerformative()) {
                     case ACLMessage.AGREE:
                         agent.log("AGREE received from " + ((AID) response.getSender()).getLocalName());
                         break;
                     case ACLMessage.INFORM:
                         agent.log("INFORM (new map) received from " + ((AID) response.getSender()).getLocalName());
-                        
-                        try 
-                        {
+
+                        try {
                             GameSettings game = (GameSettings) response.getContentObject();
                             agent.setGame(game);
                             agent.log(game.getShortString());
                             hasReply = true;
-                            
-                        } 
-                        catch (Exception e) 
-                        {
+
+                        } catch (Exception e) {
                             agent.errorLog("Incorrect content: " + e.toString());
                         }
                         break;
@@ -92,22 +75,17 @@ public class AskingForMapBehaviour extends SimpleBehaviour
                         agent.log("Failed to process the message");
                         break;
                 }
-
-                
             }
         }
     }
-    
+
     @Override
-    public boolean done() 
-    {
+    public boolean done() {
         return hasReply;
     }
-    
-    public int onEnd() 
-    {
+
+    public int onEnd() {
         hasReply = false;
-        //System.out.println("End of"+getBehaviourName());
         return 0;
     }
 
