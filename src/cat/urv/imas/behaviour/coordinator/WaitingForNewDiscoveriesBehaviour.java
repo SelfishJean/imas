@@ -15,10 +15,8 @@ import cat.urv.imas.onthology.MessageContent;
 import jade.lang.acl.*;
 import java.util.ArrayList;
 import cat.urv.imas.agent.*;
-import cat.urv.imas.map.Cell;
 import cat.urv.imas.onthology.GameSettings;
 import cat.urv.imas.onthology.InfoDiscovery;
-import cat.urv.imas.onthology.InfoMapChanges;
 import jade.core.Agent;
 /**
  * 
