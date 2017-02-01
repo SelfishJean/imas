@@ -59,7 +59,7 @@ public class BuildingCell extends Cell {
      * @return the garbage on it.
      */
     public Map<GarbageType, Integer> detectGarbage() {
-        //found = (!garbage.isEmpty());
+        found = (!garbage.isEmpty());
         return garbage;
     }
 
@@ -85,7 +85,6 @@ public class BuildingCell extends Cell {
                     garbage.clear();
                     found = false;
                 } else {
-                    System.out.println("............\nremoveGarbage() method............\nThereAreMoreThanOneUnits\n............\n............\n");
                     garbage.replace(entry.getKey(), entry.getValue()-1);
                 }
             }

@@ -52,4 +52,8 @@ public class RecyclingCenterCell extends Cell {
         return prices[0] + "/" + prices[1] + "/" + prices[2];
     }
     
+    public int[] getPrices()
+    {
+        return prices;
+    }
 }

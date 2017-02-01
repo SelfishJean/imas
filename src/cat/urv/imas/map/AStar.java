@@ -40,7 +40,7 @@ public class AStar
         });
     }
     
-    public void initGrid(Cell[][] map)
+    public static void initGrid(Cell[][] map)
     {
         int mapRows = map.length;
         int mapCols = 0;
@@ -61,10 +61,13 @@ public class AStar
         {
             for(int j = 0; j < mapCols; ++j)
             {
-                grid[i][j] = new ACell(map[i][j].getRow(), map[i][j].getCol());
+                grid[i][j] = new ACell(i, j);
+                map[i][j].getRow();
+                map[i][j].getCol();
+                grid[i][j].toString();
                 grid[i][j].heuristicCost = Math.abs(i - endRow) + Math.abs(j - endCol);
                 
-                if(map[i][j].getCellType() == CellType.STREET)
+                if(map[i][j].getCellType().equals(CellType.STREET))
                 {
                     closed[i][j] = false;
                 }
@@ -138,6 +141,8 @@ public class AStar
         //add the start location to open list.
         if(closed[startRow][startCol] == true)
         {
+            System.out.printf("(AStar) Start Cell: %d %d", startRow, startCol);
+            System.out.printf("(AStart) End Cell: %d %d", endRow, endCol);
             System.out.print("AStarError(AStar method): the start cell is blocked");
             return;
         }
@@ -245,7 +250,7 @@ public class AStar
             //System.out.println("Path: ");
             ACell current = grid[endRow][endCol];
             //System.out.print(current);
-            while (current.parent != null) 
+            while (current != null) 
             {
                 //System.out.print(" -> " + current.parent);
                 
