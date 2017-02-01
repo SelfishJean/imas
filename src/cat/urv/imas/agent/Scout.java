@@ -50,7 +50,7 @@ public class Scout extends ImasAgent {
      * InfoDiscovery. It contains all new discoveries of a turn.
      */
     public ArrayList<InfoDiscovery> newInfoDiscoveriesList;
-    
+
     /**
      * Update the game settings.
      *
@@ -68,16 +68,17 @@ public class Scout extends ImasAgent {
     public GameSettings getGame() {
         return this.game;
     }
-    
+
     /**
      * Gets the info for new discoveries in this turn.
      *
-     * @return info ALL discoveries (is a list). It has to be an ArrayList because List is not serializable.
+     * @return info ALL discoveries (is a list). It has to be an ArrayList
+     * because List is not serializable.
      */
     public ArrayList<InfoDiscovery> getNewInfoDiscoveriesList() {
         return this.newInfoDiscoveriesList;
     }
-    
+
     /**
      * Update value of the discoveries of this turn.
      *
@@ -87,7 +88,7 @@ public class Scout extends ImasAgent {
         try {
             this.newInfoDiscoveriesList.clear();
         } catch (Exception e) {
-            
+
         }
         this.newInfoDiscoveriesList = newInfo;
     }
@@ -98,21 +99,21 @@ public class Scout extends ImasAgent {
     public Scout() {
         super(AgentType.SCOUT);
     }
-    
+
     /**
      * Updates the InfoAgent of this scout.
      */
     public void updateInfoAgent() {
         Map listOfAgents = this.getGame().getAgentList();
         List<Cell> positions = (List<Cell>) listOfAgents.get(AgentType.SCOUT);
-        for (Cell c : positions)
-        {
+        for (Cell c : positions) {
             StreetCell temp = (StreetCell) c;
-            if (temp.getAgent().getAID().equals(this.getAID())) 
+            if (temp.getAgent().getAID().equals(this.getAID())) {
                 this.info = temp.getAgent();
+            }
         }
     }
-    
+
     /**
      * Gets the current info of the agent.
      *
@@ -122,8 +123,6 @@ public class Scout extends ImasAgent {
         updateInfoAgent();
         return this.info;
     }
-    
-    
 
     /**
      * Agent setup method - called when it first come on-line. Configuration of
@@ -141,7 +140,7 @@ public class Scout extends ImasAgent {
         sd1.setType(AgentType.SCOUT.toString());
         sd1.setName(getLocalName());
         sd1.setOwnership(OWNER);
-        
+
         DFAgentDescription dfd = new DFAgentDescription();
         dfd.addServices(sd1);
         dfd.setName(getAID());
@@ -157,30 +156,26 @@ public class Scout extends ImasAgent {
         ServiceDescription searchCriterion = new ServiceDescription();
         searchCriterion.setType(AgentType.SCOUT_COORDINATOR.toString());
         this.scoutCoordinator = UtilsAgents.searchAgent(this, searchCriterion);
-        // searchAgent is a blocking method, so we will obtain always a correct AID
 
         // Finite State Machine
-        
         FSMBehaviour fsm = new FSMBehaviour(this) {
             public int onEnd() {
-                            System.out.println("(ScoutAgent) FSM behaviour completed.");
-                            myAgent.doDelete();
-                            return super.onEnd();
-                    }
+                System.out.println("(ScoutAgent) FSM behaviour completed.");
+                myAgent.doDelete();
+                return super.onEnd();
+            }
         };
-        
+
         fsm.registerFirstState(new WaitingForMapBehaviour(this), "STATE_1");
         fsm.registerState(new ExploreSurroundingCellsBehaviour(this), "STATE_2");
         fsm.registerState(new SendingNewDiscoveriesBehaviour(this), "STATE_3");
         fsm.registerState(new WaitingForMapBehaviour(this), "STATE_4");
-        
+
         fsm.registerDefaultTransition("STATE_1", "STATE_2");
         fsm.registerDefaultTransition("STATE_2", "STATE_3");
-        fsm.registerDefaultTransition("STATE_3", "STATE_4", new String[] {"STATE_4"});
+        fsm.registerDefaultTransition("STATE_3", "STATE_4", new String[]{"STATE_4"});
         fsm.registerDefaultTransition("STATE_4", "STATE_2");
-        
+
         this.addBehaviour(fsm);
-        // setup finished. When we receive the last inform, the agent itself will add
-        // a behaviour to send/receive actions
     }
 }

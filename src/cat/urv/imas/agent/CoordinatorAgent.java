@@ -23,20 +23,17 @@ import cat.urv.imas.behaviour.coordinator.*;
 import cat.urv.imas.onthology.InfoAgent;
 import cat.urv.imas.onthology.InfoDiscovery;
 import cat.urv.imas.onthology.InfoMapChanges;
-import cat.urv.imas.onthology.MessageContent;
 import jade.core.*;
 import jade.core.behaviours.*;
 import jade.domain.*;
 import jade.domain.FIPAAgentManagement.*;
-import jade.domain.FIPANames.InteractionProtocol;
 import jade.lang.acl.*;
-import java.util.List;
 import java.util.ArrayList;
 
 /**
- * The main Coordinator agent. 
- * TODO: This coordinator agent should get the game settings from the System
- * agent every round and share the necessary information to other coordinators.
+ * The main Coordinator agent. TODO: This coordinator agent should get the game
+ * settings from the System agent every round and share the necessary
+ * information to other coordinators.
  */
 public class CoordinatorAgent extends ImasAgent {
 
@@ -65,39 +62,42 @@ public class CoordinatorAgent extends ImasAgent {
      */
     public ArrayList<InfoDiscovery> newInfoDiscoveriesList;
     /**
-     * InfoMapChanges. It contains all new changes we did in this turn over the map
-     * which have to be updated by SystemAgent.
+     * InfoMapChanges. It contains all new changes we did in this turn over the
+     * map which have to be updated by SystemAgent.
      */
     public InfoMapChanges newChangesOnMap;
     /**
-     * isMapUpdated. If the map has been already updated, then we can send the new positions
-     * (we need it because we need to know the new map to modify the previous position
-     * of our agents in the newInfoAgent variable in order to delete the agents correctly).
+     * isMapUpdated. If the map has been already updated, then we can send the
+     * new positions (we need it because we need to know the new map to modify
+     * the previous position of our agents in the newInfoAgent variable in order
+     * to delete the agents correctly).
      */
     public boolean updatedMap = false;
+    public boolean sentNewPositions = false;
     /**
-     * updatingMapBehaviour. It is going to be the behaviour that sends a request to 
-     * update the map.
+     * updatingMapBehaviour. It is going to be the behaviour that sends a
+     * request to update the map.
      */
     public Behaviour updatingMapBehaviour;
-    
+
     public void setUpdatedMap(boolean temp) {
         this.updatedMap = temp;
     }
-    
+
     public boolean getUpdatedMap() {
         return this.updatedMap;
     }
-    
+
     /**
      * Gets the info for new discoveries in this turn.
      *
-     * @return info ALL discoveries (is a list). It has to be an ArrayList because List is not serializable.
+     * @return info ALL discoveries (is a list). It has to be an ArrayList
+     * because List is not serializable.
      */
     public ArrayList<InfoDiscovery> getNewInfoDiscoveriesList() {
         return this.newInfoDiscoveriesList;
     }
-    
+
     /**
      * Update value of the discoveries of this turn.
      *
@@ -107,33 +107,18 @@ public class CoordinatorAgent extends ImasAgent {
         try {
             this.newInfoDiscoveriesList.clear();
         } catch (Exception e) {
-            
+
         }
         this.newInfoDiscoveriesList = newInfo;
-        
-        try { 
+
+        try {
             boolean condition;
             condition = this.newInfoDiscoveriesList.isEmpty();
-            //System.out.println("CA_______________________BeforeIf"+this.newInfoDiscoveriesList.size());
-            if (!condition) { // Even though we have initialized it in the previous step, it could be empty (No discoveries for previous scout)
-                //System.out.println("CA_______________________"+this.newInfoDiscoveriesList.size());
-            }
-            else
-            {
-                //System.out.println("CA_________________________EMPTY DISCOVERIES");
-            }
-        }catch (Exception e) {
-            
+        } catch (Exception e) {
+
         }
     }
-    
-    /**
-     * isMapUpdated. If the map has been already updated, then we can send the new positions
-     * (we need it because we need to know the new map to modify the previous position
-     * of our agents in the newInfoAgent variable in order to delete the agents correctly).
-     */
-    public boolean sentNewPositions = false;
-    
+
     /**
      * Builds the coordinator agent.
      */
@@ -142,12 +127,75 @@ public class CoordinatorAgent extends ImasAgent {
     }
 
     /**
+     * Update the game settings.
+     *
+     * @param game current game settings.
+     */
+    public void setGame(GameSettings game) {
+        this.game = game;
+    }
+
+    /**
+     * Gets the current game settings.
+     *
+     * @return the current game settings.
+     */
+    public GameSettings getGame() {
+        return this.game;
+    }
+
+    /**
+     * Gets the next information for all agents.
+     *
+     * @return info ALL agentS (is a list). It has to be an ArrayList because
+     * List is not serializable.
+     */
+    public ArrayList<InfoAgent> getNewInfoAgent() {
+        return this.newInfoAgent;
+    }
+
+    /**
+     * Update agent information.
+     *
+     * @param newInfo information of all agents for next simulation step.
+     */
+    public void setNewInfoAgent(ArrayList<InfoAgent> newInfo) {
+        this.newInfoAgent = newInfo;
+    }
+
+    /**
+     * Add new agent information.
+     *
+     * @param newInfo information of all agents for next simulation step.
+     */
+    public void addNewInfoAgent(ArrayList<InfoAgent> newInfo) {
+        this.newInfoAgent.addAll(newInfo);
+    }
+
+    /**
+     * Update the NewChangesOnMap.
+     *
+     * @param temp current new changes we did this turn.
+     */
+    public void setNewChangesOnMap(InfoMapChanges temp) {
+        this.newChangesOnMap = temp;
+    }
+
+    /**
+     * Gets the current NewChangesOnMap.
+     *
+     * @return the current game settings.
+     */
+    public InfoMapChanges getNewChangesOnMap() {
+        return this.newChangesOnMap;
+    }
+
+    /**
      * Agent setup method - called when it first come on-line. Configuration of
      * language to use, ontology and initialization of behaviours.
      */
     @Override
     protected void setup() {
-
         /* ** Very Important Line (VIL) ***************************************/
         this.setEnabledO2ACommunication(true, 1);
         /* ********************************************************************/
@@ -157,7 +205,7 @@ public class CoordinatorAgent extends ImasAgent {
         sd1.setType(AgentType.COORDINATOR.toString());
         sd1.setName(getLocalName());
         sd1.setOwnership(OWNER);
-        
+
         DFAgentDescription dfd = new DFAgentDescription();
         dfd.addServices(sd1);
         dfd.setName(getAID());
@@ -182,51 +230,27 @@ public class CoordinatorAgent extends ImasAgent {
         // searchAgent is a blocking method, so we will obtain always a correct AID
 
         /* ********************************************************************/
-        
-
-        //we add a behaviour that sends the message and waits for an answer
-        
-        
+        // we add a behaviour that sends the message and waits for an answer
         ACLMessage NewStepRequest = new ACLMessage(ACLMessage.REQUEST);
         NewStepRequest.clearAllReceiver();
         NewStepRequest.addReceiver(this.systemAgent);
         NewStepRequest.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
-        //log("Request message to agent");
+
         try {
             NewStepRequest.setContentObject(this.newInfoAgent);
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        /*
-        //mapaBehaviour.restart();
-        int i = 0;
-        while (i<3) {
-            if (i==1)
-                this.addBehaviour(new UpdateMapBehaviour(this, NewStepRequest));
-            else
-                this.addBehaviour(new RequestMapBehaviour(this, initialRequest));
-            i++;
-        }
-*/
-        //we add a behaviour that sends the message and waits for an answer
-        //this.addBehaviour(new UpdateMapBehaviour(this, NewStepRequest));
-
-        // setup finished. When we receive the last inform, the agent itself will add
-        // a behaviour to send/receive actions
-        
-        // Finite State Machine
-        
         FSMBehaviour fsm = new FSMBehaviour(this) {
             public int onEnd() {
-                            System.out.println("(CoordinatorAgent) FSM behaviour completed.");
-                            myAgent.doDelete();
-                            return super.onEnd();
-                    }
+                System.out.println("(CoordinatorAgent) FSM behaviour completed.");
+                myAgent.doDelete();
+                return super.onEnd();
+            }
         };
-        
+
         fsm.registerFirstState(new AskingForMapBehaviour(this), "STATE_1");
-        //fsm.registerState(new GenerateNewPositionsBehaviour(this), "STATE_2");
         fsm.registerState(new SendingMapBehaviour(this), "STATE_2");
         fsm.registerState(new WaitingForNewDiscoveriesBehaviour(this), "STATE_3");
         fsm.registerState(new SendingNewDiscoveriesBehaviour(this), "STATE_4");
@@ -235,91 +259,18 @@ public class CoordinatorAgent extends ImasAgent {
         fsm.registerState(new SendingNewChangesOnMapBehaviour(this), "STATE_7");
         fsm.registerState(new AskingForNewSimulationStepBehaviour(this), "STATE_8");
         fsm.registerState(new AskingForMapBehaviour(this), "STATE_9");
-        
-        //fsm.registerState(new AuxiliarSimpleBehaviour(this), "STATE_3");
-        
-        //fsm.registerState(new NewPositions(this), "STATE_2");
-        //fsm.registerState(new UpdateMapBehaviour(this), "STATE_3");
-        
+
         fsm.registerDefaultTransition("STATE_1", "STATE_2");
-        //fsm.registerDefaultTransition("STATE_2", "STATE_1", new String[] {"STATE_1"});
         fsm.registerDefaultTransition("STATE_2", "STATE_3");
         fsm.registerDefaultTransition("STATE_3", "STATE_4");
         fsm.registerDefaultTransition("STATE_4", "STATE_5");
         fsm.registerDefaultTransition("STATE_5", "STATE_6");
         fsm.registerDefaultTransition("STATE_6", "STATE_7");
         fsm.registerDefaultTransition("STATE_7", "STATE_8");
-        fsm.registerDefaultTransition("STATE_8", "STATE_9", new String[] {"STATE_9"});
+        fsm.registerDefaultTransition("STATE_8", "STATE_9", new String[]{"STATE_9"});
         fsm.registerDefaultTransition("STATE_9", "STATE_2");
-        //fsm.registerDefaultTransition("STATE_3", "STATE_1");
-        //fsm.registerDefaultTransition("STATE_3", "STATE_2");
-        //fsm.registerDefaultTransition("STATE_4", "STATE_2");
 
         this.addBehaviour(fsm);
-
-    }
-
-    /**
-     * Update the game settings.
-     *
-     * @param game current game settings.
-     */
-    public void setGame(GameSettings game) {
-        this.game = game;
-    }
-
-    /**
-     * Gets the current game settings.
-     *
-     * @return the current game settings.
-     */
-    public GameSettings getGame() {
-        return this.game;
-    }
-    
-    /**
-     * Gets the next information for all agents.
-     *
-     * @return info ALL agentS (is a list). It has to be an ArrayList because List is not serializable.
-     */
-    public ArrayList<InfoAgent> getNewInfoAgent() {
-        return this.newInfoAgent;
-    }
-    
-    /**
-     * Update agent information.
-     *
-     * @param newInfo information of all agents for next simulation step.
-     */
-    public void setNewInfoAgent(ArrayList<InfoAgent> newInfo) {
-        this.newInfoAgent = newInfo;
-    }
-    
-    /**
-     * Add new agent information.
-     *
-     * @param newInfo information of all agents for next simulation step.
-     */
-    public void addNewInfoAgent(ArrayList<InfoAgent> newInfo) {
-        this.newInfoAgent.addAll(newInfo);
-    }
-    
-    /**
-     * Update the NewChangesOnMap.
-     *
-     * @param temp current new changes we did this turn.
-     */
-    public void setNewChangesOnMap(InfoMapChanges temp) {
-        this.newChangesOnMap = temp;
-    }
-
-    /**
-     * Gets the current NewChangesOnMap.
-     *
-     * @return the current game settings.
-     */
-    public InfoMapChanges getNewChangesOnMap() {
-        return this.newChangesOnMap;
     }
 
 }

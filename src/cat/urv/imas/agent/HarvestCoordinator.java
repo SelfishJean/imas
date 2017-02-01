@@ -25,15 +25,11 @@ import cat.urv.imas.map.StreetCell;
 import cat.urv.imas.onthology.GameSettings;
 import cat.urv.imas.onthology.InfoAgent;
 import cat.urv.imas.onthology.InfoDiscovery;
-import cat.urv.imas.onthology.MessageContent;
 import jade.core.*;
 import jade.core.behaviours.FSMBehaviour;
 import jade.domain.*;
 import jade.domain.FIPAAgentManagement.*;
-import jade.domain.FIPANames.InteractionProtocol;
-import jade.lang.acl.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,7 +49,8 @@ public class HarvestCoordinator extends ImasAgent {
      */
     public ArrayList<InfoAgent> newInfoAgent;
     /**
-     * ListOfHarvesters. It contains all information related to Harvester Agents.
+     * ListOfHarvesters. It contains all information related to Harvester
+     * Agents.
      */
     public ArrayList<InfoAgent> harvesters;
     /**
@@ -62,104 +59,75 @@ public class HarvestCoordinator extends ImasAgent {
     public ArrayList<InfoDiscovery> newInfoDiscoveriesList;
 
     /**
-     * OngoingGoals. All goals our harvester are doing. Once we have assigned a goal
-     * we save it in this variable (we consider the trip until the building as part 
-     * of the goal). 
+     * OngoingGoals. All goals our harvester are doing. Once we have assigned a
+     * goal we save it in this variable (we consider the trip until the building
+     * as part of the goal).
      */
     public Map<AID, Cell> ongoingGoals;
     /**
-     * CellsCollectedGarbage. All cells in which our harvesters have collected garbage
-     * in this turn. 
+     * CellsCollectedGarbage. All cells in which our harvesters have collected
+     * garbage in this turn.
      */
     public ArrayList<Cell> cellsCollectedGarbage;
-    
-        /**
-     * Update the game settings.
-     *
-     * @param game current game settings.
-     */
+
     public void setGame(GameSettings game) {
         this.game = game;
     }
 
-    /**
-     * Gets the current game settings.
-     *
-     * @return the current game settings.
-     */
     public GameSettings getGame() {
         return this.game;
     }
-    
+
     /**
      * Gets the next information for all agents.
      *
-     * @return info ALL agentS (is a list). It has to be an ArrayList because List is not serializable.
+     * @return info ALL agentS (is a list). It has to be an ArrayList because
+     * List is not serializable.
      */
     public ArrayList<InfoAgent> getNewInfoAgent() {
         return this.newInfoAgent;
     }
-    
-    /**
-     * Update agent information.
-     *
-     * @param newInfo information of all agents for next simulation step.
-     * 
-     * OLD VERSION (When we use GenerateNewPositionsBehaviour InHarvesterCoordinatorDirectly) REMEMBER UNCOMMENT THE LINE "agent.setNewInfoAgent(newPositions);" FROM THAT BEHAVIUOR.
-     * public void setNewInfoAgent(ArrayList<InfoAgent> newInfo) {
-        try {
-            this.newInfoAgent.clear();
-        } catch (Exception e) {
-            
-        }
-        this.newInfoAgent = newInfo 
-    }
-     * 
-     * 
-     */
+
     public void setNewInfoAgent(InfoAgent newInfo) {
         try {
             this.newInfoAgent.clear();
         } catch (Exception e) {
-            
+
         }
-        this.newInfoAgent = new ArrayList<InfoAgent>(); // We initialize the variable
+        // We initialize the variable
+        this.newInfoAgent = new ArrayList<InfoAgent>();
         this.newInfoAgent.add(newInfo);
     }
-    
+
     /**
      * Update value of the positions of this turn.
      *
      * @param newInfo information about new discoveries discovered in this turn.
      */
     public void addNewInfoAgent(InfoAgent newInfo) {
-        try { 
+        try {
             boolean condition;
             condition = this.newInfoAgent.isEmpty();
-            //System.out.println("SC_______________________"+this.newInfoDiscoveriesList.size());
-            if (!condition) { // Even though we have initialized it in the previous step, it could be empty (No discoveries for previous scout)
-                this.newInfoAgent.add(newInfo); 
-                //System.out.println("SC_______________________"+this.newInfoDiscoveriesList.size());
-            }
-            else
-            {
+            if (!condition) {
                 this.newInfoAgent.add(newInfo);
-                //System.out.println("SC_________________________ EMPTY DISCOVERIES");
+            } else {
+                this.newInfoAgent.add(newInfo);
             }
-        }catch (Exception e) {
-            
+        } catch (Exception e) {
+
         }
     }
-    
+
     /**
      * Gets the info for new discoveries in this turn.
      *
-     * @return info ALL discoveries (is a list). It has to be an ArrayList because List is not serializable.
+     * @return info ALL discoveries (is a list). It has to be an ArrayList
+     * because List is not serializable.
      */
     public ArrayList<InfoDiscovery> getNewInfoDiscoveriesList() {
         return this.newInfoDiscoveriesList;
     }
-    
+
     /**
      * Update value of the discoveries of this turn.
      *
@@ -168,73 +136,56 @@ public class HarvestCoordinator extends ImasAgent {
     public void setNewInfoDiscoveriesList(ArrayList<InfoDiscovery> newInfo) {
         this.newInfoDiscoveriesList = newInfo;
     }
-    
+
     /**
      * Update value of the discoveries of this turn.
      *
      * @param newInfo information about new discoveries discovered in this turn.
      */
     public void addNewInfoDiscoveriesList(ArrayList<InfoDiscovery> newInfo) {
-        try { 
+        try {
             boolean condition;
             condition = this.newInfoDiscoveriesList.isEmpty();
-            //System.out.println("HC_______________________BeforeAdding"+this.newInfoDiscoveriesList.size());
-            if (!condition) 
-            { // Even though we have initialized it in the previous step, it could be empty (No discoveries for previous scout)
-                /*
-                for(int i = 0; i < newInfo.size(); ++i)
-                {
-                    if(this.newInfoDiscoveriesList.contains(newInfo.get(i)) == false)
-                    {
-                        System.out.print("Heap size:" + this.newInfoDiscoveriesList.size() 
-                                + "; garbage:" + newInfo.get(i).getGarbage().toString() 
-                                + newInfo.get(i).getRow() + newInfo.get(i).getColumn());
-                        this.newInfoDiscoveriesList.add(newInfo.get(i));
-                    }
-                }*/
-                for (int g = 0; g < newInfo.size(); g++)
-                {
+
+            if (!condition) {
+                for (int g = 0; g < newInfo.size(); g++) {
                     ArrayList<InfoDiscovery> tempList;
-                    tempList = (ArrayList<InfoDiscovery>)this.newInfoDiscoveriesList.clone();
+                    tempList = (ArrayList<InfoDiscovery>) this.newInfoDiscoveriesList.clone();
                     boolean add = true;
-                    for (int y = 0; y < tempList.size(); y++)
-                    {
+                    for (int y = 0; y < tempList.size(); y++) {
                         InfoDiscovery temp;
                         temp = tempList.get(y);
-                        if(temp.getColumn() == newInfo.get(g).getColumn() && temp.getRow() == newInfo.get(g).getRow()) 
-                        {
+                        if (temp.getColumn() == newInfo.get(g).getColumn() && temp.getRow() == newInfo.get(g).getRow()) {
                             add = false;
                             break;
                         }
                     }
-                    
-                    if(add == true)
-                    {
-                        this.log("Heap size:" + this.newInfoDiscoveriesList.size() 
-                                + "; garbage:" + newInfo.get(g).getGarbage().toString() 
+
+                    if (add == true) {
+                        this.log("Heap size:" + this.newInfoDiscoveriesList.size()
+                                + "; garbage:" + newInfo.get(g).getGarbage().toString()
                                 + newInfo.get(g).getRow() + " " + newInfo.get(g).getColumn());
                         this.newInfoDiscoveriesList.add(newInfo.get(g));
                     }
                 }
-            }
-            else
-            {
+            } else {
                 this.newInfoDiscoveriesList = newInfo;
-                //System.out.println("HC_________________________EMPTY DISCOVERIES");
             }
-        }catch (Exception e) {
-            
+        } catch (Exception e) {
+
         }
     }
 
-     /**
+    /**
      * Initialization of ongoingGoals.
      *
      * @param temp new assigned goal.
      */
     public void initializeOngoingGoals() {
-        this.ongoingGoals = new HashMap<AID, Cell>() {};
+        this.ongoingGoals = new HashMap<AID, Cell>() {
+        };
     }
+
     /**
      * Adding new ongoingGoals.
      *
@@ -242,7 +193,6 @@ public class HarvestCoordinator extends ImasAgent {
      */
     public void addOngoingGoals(AID agent, Cell temp) {
         this.ongoingGoals.put(agent, temp);
-        System.out.println("_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*ongoing   "+this.ongoingGoals.size());
     }
 
     /**
@@ -253,7 +203,7 @@ public class HarvestCoordinator extends ImasAgent {
     public Map<AID, Cell> getOngoingGoals() {
         return this.ongoingGoals;
     }
-    
+
     /**
      * Initialization of cellsCollectedGarbage.
      *
@@ -262,6 +212,7 @@ public class HarvestCoordinator extends ImasAgent {
     public void initializeCellsCollectedGarbage() {
         this.cellsCollectedGarbage = new ArrayList<Cell>();
     }
+
     /**
      * Adding new ongoingGoals.
      *
@@ -269,7 +220,6 @@ public class HarvestCoordinator extends ImasAgent {
      */
     public void addCellsCollectedGarbage(Cell temp) {
         this.cellsCollectedGarbage.add(temp);
-        System.out.println("_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*cells   "+this.cellsCollectedGarbage.size());
     }
 
     /**
@@ -280,7 +230,7 @@ public class HarvestCoordinator extends ImasAgent {
     public ArrayList<Cell> getCellsCollectedGarbage() {
         return this.cellsCollectedGarbage;
     }
-    
+
     /**
      * Builds the coordinator agent.
      */
@@ -291,12 +241,13 @@ public class HarvestCoordinator extends ImasAgent {
     /**
      * Gets information for all harvesters.
      *
-     * @return info ALL agentS (is a list). It has to be an ArrayList because List is not serializable.
+     * @return info ALL agentS (is a list). It has to be an ArrayList because
+     * List is not serializable.
      */
     public ArrayList<InfoAgent> getListHarvesters() {
         return this.harvesters;
     }
-    
+
     /**
      * Set the list of scouts.
      *
@@ -306,40 +257,36 @@ public class HarvestCoordinator extends ImasAgent {
         try {
             this.harvesters.clear();
         } catch (Exception e) {
-            
+
         }
         this.harvesters = hv;
     }
-    
+
     /**
      * Builds a list of all HarvesterAgents.
      */
-    public void initHarvesters()
-    {
+    public void initHarvesters() {
         Map listOfAgents = this.getGame().getAgentList();
         List<Cell> positions = (List<Cell>) listOfAgents.get(AgentType.HARVESTER);
         ArrayList<InfoAgent> allHarvesters;
         allHarvesters = new ArrayList<InfoAgent>();
-        
-        for(Cell pos : positions)
-        {
+
+        for (Cell pos : positions) {
             StreetCell temp = (StreetCell) pos;
-            
-            if(temp.isThereAnAgent() == true)
-            {
+
+            if (temp.isThereAnAgent() == true) {
                 allHarvesters.add(temp.getAgent());
             }
         }
         this.setListHarvesters(allHarvesters);
     }
-    
+
     /**
      * Agent setup method - called when it first come on-line. Configuration of
      * language to use, ontology and initialization of behaviours.
      */
     @Override
     protected void setup() {
-
         /* ** Very Important Line (VIL) ***************************************/
         this.setEnabledO2ACommunication(true, 1);
         /* ********************************************************************/
@@ -349,7 +296,7 @@ public class HarvestCoordinator extends ImasAgent {
         sd1.setType(AgentType.HARVESTER_COORDINATOR.toString());
         sd1.setName(getLocalName());
         sd1.setOwnership(OWNER);
-        
+
         DFAgentDescription dfd = new DFAgentDescription();
         dfd.addServices(sd1);
         dfd.setName(getAID());
@@ -365,122 +312,79 @@ public class HarvestCoordinator extends ImasAgent {
         ServiceDescription searchCriterion = new ServiceDescription();
         searchCriterion.setType(AgentType.COORDINATOR.toString());
         this.coordinatorAgent = UtilsAgents.searchAgent(this, searchCriterion);
-        // searchAgent is a blocking method, so we will obtain always a correct AID
 
-        
         // Finite State Machine
-        
         FSMBehaviour fsm = new FSMBehaviour(this) {
             public int onEnd() {
-                            System.out.println("(ScoutCoordinator) FSM behaviour completed.");
-                            myAgent.doDelete();
-                            return super.onEnd();
-                    }
+                System.out.println("(ScoutCoordinator) FSM behaviour completed.");
+                myAgent.doDelete();
+                return super.onEnd();
+            }
         };
-        
+
         fsm.registerFirstState(new WaitingForMapBehaviour(this), "STATE_1");
         fsm.registerState(new SendingMapBehaviour(this), "STATE_2");
         fsm.registerState(new WaitingForNewDiscoveriesBehaviour(this), "STATE_3");
         fsm.registerState(new WaitingAgentsStateBehaviour(this), "STATE_4");
-        //fsm.registerState(new GenerateNewPositionsBehaviour(this), "STATE_5");
         fsm.registerState(new WaitingForNewPositionsBehaviour(this), "STATE_5");
         fsm.registerState(new SendingNewPositionsBehaviour(this), "STATE_6");
         fsm.registerState(new SendingNewCollectedGarbageBehaviour(this), "STATE_7");
         fsm.registerFirstState(new WaitingForMapBehaviour(this), "STATE_8");
-        
+
         fsm.registerDefaultTransition("STATE_1", "STATE_2");
         fsm.registerDefaultTransition("STATE_2", "STATE_3");
         fsm.registerDefaultTransition("STATE_3", "STATE_4");
         fsm.registerDefaultTransition("STATE_4", "STATE_5");
         fsm.registerDefaultTransition("STATE_5", "STATE_6");
         fsm.registerDefaultTransition("STATE_6", "STATE_7");
-        fsm.registerDefaultTransition("STATE_7", "STATE_8", new String[] {"STATE_8"});
+        fsm.registerDefaultTransition("STATE_7", "STATE_8", new String[]{"STATE_8"});
         fsm.registerDefaultTransition("STATE_8", "STATE_2");
-        
-        /*
-        fsm.registerFirstState(new WaitingForMapBehaviour(this), "STATE_1");
-        fsm.registerState(new SendingMapBehaviour(this), "STATE_2");
-        fsm.registerState(new WaitingForNewDiscoveriesBehaviour(this), "STATE_3");
-        fsm.registerState(new WaitingAgentsStateBehaviour(this), "STATE_4");
-        //fsm.registerState(new GenerateNewPositionsBehaviour(this), "STATE_5");
-        fsm.registerState(new WaitingForNewPositionsBehaviour(this), "STATE_5");
-        fsm.registerState(new SendingNewPositionsBehaviour(this), "STATE_6");
-        fsm.registerFirstState(new WaitingForMapBehaviour(this), "STATE_7");
-        
-        fsm.registerDefaultTransition("STATE_1", "STATE_2");
-        fsm.registerDefaultTransition("STATE_2", "STATE_3");
-        fsm.registerDefaultTransition("STATE_3", "STATE_4");
-        fsm.registerDefaultTransition("STATE_4", "STATE_5");
-        fsm.registerDefaultTransition("STATE_5", "STATE_6");
-        fsm.registerDefaultTransition("STATE_6", "STATE_7", new String[] {"STATE_7"});
-        fsm.registerDefaultTransition("STATE_7", "STATE_2");*/
-        
-        this.addBehaviour(fsm);
 
-        // setup finished. When we receive the last inform, the agent itself will add
-        // a behaviour to send/receive actions
+        this.addBehaviour(fsm);
     }
-    
-    
-    public Cell getCollectingCell(InfoAgent harvester, InfoDiscovery building)
-    {
+
+    public Cell getCollectingCell(InfoAgent harvester, InfoDiscovery building) {
         Cell[][] map = game.getMap();
-        if(harvester.getRow() > building.getRow() 
-                && map[building.getRow() + 1][building.getColumn()].getCellType() == CellType.STREET)
-        {
+        if (harvester.getRow() > building.getRow()
+                && map[building.getRow() + 1][building.getColumn()].getCellType() == CellType.STREET) {
             return map[building.getRow() + 1][building.getColumn()];
-        }
-        else if((harvester.getRow() <= building.getRow() 
-                && map[building.getRow() - 1][building.getColumn()].getCellType() == CellType.STREET))
-        {
+        } else if ((harvester.getRow() <= building.getRow()
+                && map[building.getRow() - 1][building.getColumn()].getCellType() == CellType.STREET)) {
             return map[building.getRow() - 1][building.getColumn()];
-        }
-        else if((harvester.getColumn() <= building.getColumn() 
-                && map[building.getRow()][building.getColumn() - 1].getCellType() == CellType.STREET))
-        {
+        } else if ((harvester.getColumn() <= building.getColumn()
+                && map[building.getRow()][building.getColumn() - 1].getCellType() == CellType.STREET)) {
             return map[building.getRow()][building.getColumn() - 1];
-        }
-        else 
-        {
+        } else {
             return map[building.getRow()][building.getColumn() + 1];
         }
     }
-    
-    public Cell[] assignGoal(AID harvesterAID)
-    {
+
+    public Cell[] assignGoal(AID harvesterAID) {
         InfoAgent harvester = null;
-        for(int i = 0; i < harvesters.size(); ++i)
-        {
-            if(harvesters.get(i).getAID().equals(harvesterAID))
-            {
+        for (int i = 0; i < harvesters.size(); ++i) {
+            if (harvesters.get(i).getAID().equals(harvesterAID)) {
                 harvester = harvesters.get(i);
             }
         }
-        
+
         // get nearest garbage
         ArrayList<InfoDiscovery> discoveries = this.getNewInfoDiscoveriesList();
-        double minDist = 10000;
+        double minDist = 100000000;
         int buildingIndex = 0;
-        for(int i = 0; i < discoveries.size(); ++i)
-        {
+        for (int i = 0; i < discoveries.size(); ++i) {
             InfoDiscovery temp = discoveries.get(i);
-            double tempDist = (harvester.getRow() - temp.getRow()) + (harvester.getColumn() - temp.getColumn());
-            
-            if(tempDist < minDist)
-            {
+            double tempDist = (harvester.getRow() - temp.getRow())^2 + (harvester.getColumn() - temp.getColumn())^2;
+
+            if (tempDist < minDist) {
                 minDist = tempDist;
                 buildingIndex = i;
             }
         }
-        
+
         InfoDiscovery building = this.newInfoDiscoveriesList.remove(buildingIndex);
-        //System.out.printf("New goal: %d %d\n", building.getRow(), building.getColumn());
         Cell goal = this.getCollectingCell(harvester, building);
         Cell buildingCell = this.game.getMap()[building.getRow()][building.getColumn()];
-        
         Cell[] result = {goal, buildingCell};
-             
-        //System.out.printf("Near goal: %d %d\n", goal.getRow(), goal.getCol());
         return result;
     }
 }

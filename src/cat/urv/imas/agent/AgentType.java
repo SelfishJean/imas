@@ -57,5 +57,6 @@ public enum AgentType {
             return "S";
         }
     };
+
     public abstract String getShortString();
 }

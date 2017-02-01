@@ -36,10 +36,11 @@ import jade.wrapper.StaleProxyException;
 public class UtilsAgents {
 
     /**
-     * After each search of an agent, we will wait for 2 seconds before retrying.
+     * After each search of an agent, we will wait for 2 seconds before
+     * retrying.
      */
     private static final long DELAY = 2000;
-    
+
     /**
      * To prevent being instanced.
      */

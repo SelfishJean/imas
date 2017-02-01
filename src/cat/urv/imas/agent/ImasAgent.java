@@ -20,16 +20,16 @@ package cat.urv.imas.agent;
 import jade.core.Agent;
 
 /**
- * Agent abstraction used in this practical work.
- * It gathers common attributes and functionality from all agents.
+ * Agent abstraction used in this practical work. It gathers common attributes
+ * and functionality from all agents.
  */
 public class ImasAgent extends Agent {
-    
+
     /**
      * Type of this agent.
      */
     protected AgentType type;
-    
+
     /**
      * Agents' owner.
      */
@@ -42,24 +42,26 @@ public class ImasAgent extends Agent {
      * Onthology used in the communication.
      */
     public static final String ONTOLOGY = "serialized-object";
-    
+
     /**
      * Creates the agent.
+     *
      * @param type type of agent to set.
      */
     public ImasAgent(AgentType type) {
         super();
         this.type = type;
     }
-    
+
     /**
      * Informs the type of agent.
+     *
      * @return the type of agent.
      */
     public AgentType getType() {
         return this.type;
     }
-    
+
     /**
      * Add a new message to the log.
      *
@@ -68,7 +70,7 @@ public class ImasAgent extends Agent {
     public void log(String str) {
         System.out.println(getLocalName() + ": " + str);
     }
-    
+
     /**
      * Add a new message to the error log.
      *
@@ -77,5 +79,5 @@ public class ImasAgent extends Agent {
     public void errorLog(String str) {
         System.err.println(getLocalName() + ": " + str);
     }
-    
+
 }
