@@ -30,7 +30,8 @@ import java.util.Set;
  *
  * @author albertOlivares
  */
-public class DumpingBehaviour extends SimpleBehaviour {
+public class DumpingBehaviour extends SimpleBehaviour 
+{
     
     public DumpingBehaviour(Agent a) {
         super(a);
@@ -41,7 +42,26 @@ public class DumpingBehaviour extends SimpleBehaviour {
         
         agent.log("DumpingBehaviour...");
 
-
+        /*
+        From the variable in which we have the quantity of garbage a Harvester have,
+        we delete an unit and if after doing that we do not have more garbage, then
+        we have to change our state to FREE and of course to set our next position as 
+        the one we have now.
+        */
+        // modified**
+        Cell curCell = agent.getCurrentCell();
+        if(curCell == null)
+        {
+            agent.log("Skipped dumping");
+            return;
+        }
+        
+        if(agent.dumpGarbage(curCell) == false)
+        {
+            return;
+        }
+        
+        agent.setCurrentAgentState(MessageContent.FREE);
     }
     
     @Override

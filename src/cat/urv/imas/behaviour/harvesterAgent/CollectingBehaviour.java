@@ -41,7 +41,36 @@ public class CollectingBehaviour extends SimpleBehaviour {
         
         agent.log("CollectingBehaviour...");
 
+        /*
+        We have to take garbage until there is not or we are full. Basically,
+        we need to look at the garbage the building has and if it is greater than one
+        then we keep our state of collecting and we set our nextPosition as the one we 
+        currently have. 
 
+        It will be the HarvesterCoordinator which will know in which building we are
+        because it ordered us that goal. So, every turn we say to HC that we are 
+        collecting it will delete one unit from the variable in which it has and it 
+        will send, somehow, the current garbage of all buildings in which we are
+        collecting. Cordinator Agent will send that info to SystemAgent, who will
+        update the quantity of garbage of those buildings every turn.
+        */
+        // modified**
+        Cell curCell = agent.getCurrentCell();
+        if(curCell == null)
+        {
+            agent.log("Skipped collecting");
+            return;
+        }
+        
+        if(agent.collectGarbage(curCell) == false)
+        {
+            return;
+        }
+        
+        agent.findRCenter();
+        agent.calculatePath(agent.getCurrentCell(), agent.getNewGoalCell());
+        agent.setCurrentAgentState(MessageContent.MOVING);
+        
     }
     
     @Override

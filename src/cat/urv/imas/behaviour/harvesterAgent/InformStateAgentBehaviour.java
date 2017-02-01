@@ -14,6 +14,7 @@ import cat.urv.imas.onthology.MessageContent;
 import jade.lang.acl.*;
 import java.util.ArrayList;
 import cat.urv.imas.agent.*;
+import cat.urv.imas.map.Cell;
 import cat.urv.imas.onthology.GameSettings;
 import jade.core.Agent;
 /**
@@ -36,11 +37,16 @@ public class InformStateAgentBehaviour extends SimpleBehaviour
     { 
         Harvester agent = (Harvester) this.getAgent();
         
-        /* HERE WE SHOULD CHECK, IF THE PREVIOUS STATE OF THE AGENT WAS MOVING, 
-        IF THE PATH HAS FINISHED OR NOT..SYSTEM AGENT CAN CHOOSE NOT TO MOVE AN
-        AGENT IF THERE IS A CONFLICT SO WE CANNOT ENSURE THAT OUR LAST MOVEMENT
-        ACTUALLY HAPPENED UNTIL NOW, WHEN THE MAP IS UPDATED
-        */
+        
+        if (agent.state.equals(MessageContent.MOVING))
+        {
+            /* HERE WE SHOULD CHECK, IF THE PREVIOUS STATE OF THE AGENT WAS MOVING, 
+            IF THE PATH HAS FINISHED OR NOT..SYSTEM AGENT CAN CHOOSE NOT TO MOVE AN
+            AGENT IF THERE IS A CONFLICT SO WE CANNOT ENSURE THAT OUR LAST MOVEMENT
+            ACTUALLY HAPPENED UNTIL NOW, WHEN THE MAP IS UPDATED
+            */
+        }
+        
         
         // We set the value of the first message.
         ACLMessage initialRequest = new ACLMessage(ACLMessage.REQUEST);
@@ -69,9 +75,6 @@ public class InformStateAgentBehaviour extends SimpleBehaviour
 
             if(response != null) 
             {
-                //System.out.println(response.getPerformative());
-                //CoordinatorAgent agent = (CoordinatorAgent) myAgent;
-                //CoordinatorAgent agent = (CoordinatorAgent) this.getAgent();
                 switch(response.getPerformative()) 
                 {
                     case ACLMessage.AGREE:
@@ -82,14 +85,14 @@ public class InformStateAgentBehaviour extends SimpleBehaviour
                         
                         try 
                         {
-                            /* HERE WE SHOULD TRY TO SET THE VALUE OF "newGoalCell"
-                            Cell c = (Cell) response.getContentObject();
-                            agent.setNewGoalCell(c);
+                            /* HERE WE SHOULD TRY TO SET THE VALUE OF "newGoalCell"*/
+                            Cell[]c = (Cell[]) response.getContentObject();
+                            agent.setNewGoalCell(c[0]);
+                            agent.goalBuilding = c[1];
                             agent.log("New Goal received correctly");
-                            hasReply = true;
-                            */
                             
-                        } 
+                            nextBehaviour = 1; // StartingGoalBehaviour
+                        }
                         catch (Exception e) 
                         {
                             /* HERE, IF IT IS NOT POSSIBLE TO SET THE VALUE THAT IS BECAUSE
@@ -98,14 +101,29 @@ public class InformStateAgentBehaviour extends SimpleBehaviour
                             */
                             agent.log("Message with the inform: "+response.getContent());
                             //agent.errorLog("Incorrect content: " + e.toString());
+                            if (response.getContent().equals(MessageContent.NO_GOAL))
+                                nextBehaviour = 5; // ChillingBehaviour
                         }
-                        agent.log("Message with the inform: "+response.getContent());
+                        //agent.log("Message with the inform: "+response.getContent());
                         hasReply = true;
-                        nextBehaviour = 1;
+                        
+                        // Selecting Next Behaviour
+                        switch (agent.state)
+                        {
+                            case MessageContent.MOVING:
+                                nextBehaviour = 2; // MovingBehaviour
+                                break;
+                            case MessageContent.COLLECTING:
+                                nextBehaviour = 3; // CollectingBehaviour
+                                break;
+                            case MessageContent.DUMPING:
+                                nextBehaviour = 4; // DumpingBehaviour
+                                break;
+                        }
                         break;
                     case ACLMessage.FAILURE:
                         agent.log("The action has failed.");
-                        nextBehaviour = 0;
+                        nextBehaviour = 0; // We repeat this behaviour.
                         return;
                     default:
                         agent.log("Failed to process the message");
